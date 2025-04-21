@@ -1,7 +1,7 @@
 package ru.practicum.ewm.stats.client;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -23,8 +23,10 @@ public class StatClientImpl implements StatClient {
     private final RestClient restClient;
 
     @Autowired
-    public StatClientImpl(@Value("${client.url}") String serverUrl) {
-        this.restClient = RestClient.builder().baseUrl(serverUrl).build();
+    public StatClientImpl(DiscoveryClient discoveryClient) {
+        this.restClient = RestClient.builder()
+                .baseUrl(String.valueOf(discoveryClient.getInstances("stats-server").getFirst().getUri()))
+                .build();
     }
 
     public String saveHit(EndpointHitDto requestBody) {

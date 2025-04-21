@@ -53,7 +53,7 @@ public class EventServiceImpl implements EventService {
 
     private final StatClient statClient;
 
-    @Value("${ewm.service.name}")
+    @Value("${spring.application.name}")
     private String serviceName;
 
     @Override

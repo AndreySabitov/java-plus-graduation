@@ -1,6 +1,6 @@
 spring:
   application:
-    name: ewm-server
+    name: main-service
   config:
     import: "configserver:"
   cloud:

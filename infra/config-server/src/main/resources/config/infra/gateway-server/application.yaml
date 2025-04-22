@@ -9,14 +9,14 @@ spring:
           enabled: true
       routes:
         - id: admin_route
-          uri: lb://ewm-server
+          uri: lb://main-service
           predicates:
             - Path=/admin/**
         - id: users_route
-          uri: lb://ewm-server
+          uri: lb://main-service
           predicates:
             - Path=/users/{userId}/**
         - id: public_routes
-          uri: lb://ewm-server
+          uri: lb://main-service
           predicates:
             - Path=/{segment:(?:categories|comments|compilations|events)}/**

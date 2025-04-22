@@ -1,6 +1,8 @@
 package ru.practicum.ewm.compilation.service;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,12 +19,14 @@ import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.stats.client.StatClient;
 import ru.practicum.ewm.stats.dto.StatsDto;
+import ru.practicum.ewm.stats.exceptions.StatsServerUnavailable;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 @Transactional(readOnly = true)
@@ -80,6 +84,7 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public List<CompilationDto> getAllCompilations(Boolean pinned, Integer from, Integer size) {
+        log.info("Получили from = {}, size = {}", from, size);
         PageRequest pageRequest = PageRequest.of(from / size, size);
         List<Compilation> allCompilations;
         if (pinned == null) {
@@ -87,9 +92,15 @@ public class CompilationServiceImpl implements CompilationService {
         } else {
             allCompilations = compilationRepository.findAllByPinned(pageRequest, pinned);
         }
-        Map<Long, EventShortDto> allEventDto = mapToEventShort(allCompilations.stream()
-                .flatMap(compilation -> compilation.getEvents().stream()).toList())
-                .stream().collect(Collectors.toMap(EventShortDto::getId, Function.identity()));
+        Map<Long, EventShortDto> allEventDto = new HashMap<>();
+        mapToEventShort(allCompilations.stream()
+                .flatMap(compilation -> compilation.getEvents().stream()).toList()).stream()
+                .toList().forEach(event -> {
+                    if (!allEventDto.containsKey(event.getId())) {
+                        allEventDto.put(event.getId(), event);
+                    }
+                });
+
         List<CompilationDto> compilationDtoList = new ArrayList<>();
         for (Compilation compilation : allCompilations) {
             List<EventShortDto> listEventDto = compilation.getEvents().stream().map(event -> allEventDto.get(event.getId()))
@@ -97,7 +108,6 @@ public class CompilationServiceImpl implements CompilationService {
             compilationDtoList.add(CompilationMapper.toCompilationDto(compilation, listEventDto));
         }
         return compilationDtoList;
-
     }
 
     @Override
@@ -121,19 +131,23 @@ public class CompilationServiceImpl implements CompilationService {
         }
         LocalDateTime minTime = events.stream().map(Event::getCreatedOn).min(Comparator.comparing(Function.identity())).get();
         List<String> urisList = events.stream().map(event -> "/events/" + event.getId()).toList();
-        String uris = String.join(", ", urisList);
-        List<StatsDto> statsList = statClient.getStats(minTime.minusSeconds(1), LocalDateTime.now(), uris, false);
-        return events.stream().map(event -> {
-                    Optional<StatsDto> result = statsList.stream()
-                            .filter(statsDto -> statsDto.getUri().equals("/events/" + event.getId()))
-                            .findFirst();
-                    if (result.isPresent()) {
-                        return EventMapper.mapToShortDto(event, result.get().getHits());
-                    } else {
-                        return EventMapper.mapToShortDto(event, 0L);
-                    }
-                })
-                .collect(Collectors.toList());
+        try {
+            List<StatsDto> statsList = statClient.getStats(minTime.minusSeconds(1), LocalDateTime.now(), urisList,
+                    false);
+            return events.stream().map(event -> {
+                        Optional<StatsDto> result = statsList.stream()
+                                .filter(statsDto -> statsDto.getUri().equals("/events/" + event.getId()))
+                                .findFirst();
+                        if (result.isPresent()) {
+                            return EventMapper.mapToShortDto(event, result.get().getHits());
+                        } else {
+                            return EventMapper.mapToShortDto(event, 0L);
+                        }
+                    })
+                    .collect(Collectors.toList());
+        } catch (FeignException e) {
+            throw new StatsServerUnavailable(e.getMessage(), e);
+        }
     }
 }
 

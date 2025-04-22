@@ -1,6 +1,7 @@
 package ru.practicum.ewm.event.service;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
+import feign.FeignException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ import ru.practicum.ewm.partrequest.service.ParticipationRequestService;
 import ru.practicum.ewm.stats.client.StatClient;
 import ru.practicum.ewm.stats.dto.EndpointHitDto;
 import ru.practicum.ewm.stats.dto.StatsDto;
+import ru.practicum.ewm.stats.exceptions.StatsServerUnavailable;
 import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.repository.UserRepository;
 
@@ -85,22 +87,24 @@ public class EventServiceImpl implements EventService {
                 .map(event -> "/events/" + event.getId())
                 .toList();
 
-        String uris = String.join(", ", urisList);
+        try {
+            List<StatsDto> statsList = statClient.getStats(events.getFirst().getCreatedOn().minusSeconds(1),
+                    LocalDateTime.now(), urisList, false);
 
-        List<StatsDto> statsList = statClient.getStats(events.getFirst().getCreatedOn().minusSeconds(1),
-                LocalDateTime.now(), uris, false);
-
-        return events.stream().map(event -> {
-                    Optional<StatsDto> result = statsList.stream()
-                            .filter(statsDto -> statsDto.getUri().equals("/events/" + event.getId()))
-                            .findFirst();
-                    if (result.isPresent()) {
-                        return EventMapper.mapToShortDto(event, result.get().getHits());
-                    } else {
-                        return EventMapper.mapToShortDto(event, 0L);
-                    }
-                })
-                .toList();
+            return events.stream().map(event -> {
+                        Optional<StatsDto> result = statsList.stream()
+                                .filter(statsDto -> statsDto.getUri().equals("/events/" + event.getId()))
+                                .findFirst();
+                        if (result.isPresent()) {
+                            return EventMapper.mapToShortDto(event, result.get().getHits());
+                        } else {
+                            return EventMapper.mapToShortDto(event, 0L);
+                        }
+                    })
+                    .toList();
+        } catch (FeignException e) {
+            throw new StatsServerUnavailable(e.getMessage(), e);
+        }
     }
 
     @Override
@@ -113,13 +117,17 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Можно просмотреть только своё событие");
         }
         String uri = "/events/" + eventId;
-        List<StatsDto> statsList = statClient.getStats(event.getCreatedOn().minusSeconds(1), LocalDateTime.now(), uri,
-                false);
-        Optional<StatsDto> result = statsList.stream().findFirst();
-        if (result.isPresent()) {
-            return EventMapper.mapToFullDto(event, result.get().getHits());
-        } else {
-            return EventMapper.mapToFullDto(event, 0L);
+        try {
+            List<StatsDto> statsList = statClient.getStats(event.getCreatedOn().minusSeconds(1), LocalDateTime.now(),
+                    List.of(uri), false);
+            Optional<StatsDto> result = statsList.stream().findFirst();
+            if (result.isPresent()) {
+                return EventMapper.mapToFullDto(event, result.get().getHits());
+            } else {
+                return EventMapper.mapToFullDto(event, 0L);
+            }
+        } catch (FeignException e) {
+            throw new StatsServerUnavailable(e.getMessage(), e);
         }
     }
 
@@ -164,7 +172,7 @@ public class EventServiceImpl implements EventService {
             event.setPaid(updateRequest.getPaid());
         }
         if (updateRequest.getCommenting() != null) {
-           event.setCommenting(updateRequest.getCommenting());
+            event.setCommenting(updateRequest.getCommenting());
         }
         if (updateRequest.getParticipantLimit() != null) {
             event.setParticipantLimit(updateRequest.getParticipantLimit());
@@ -224,49 +232,52 @@ public class EventServiceImpl implements EventService {
                 .map(event -> "/events/" + event.getId())
                 .toList();
 
-        String uris = String.join(", ", urisList);
-
-        List<StatsDto> statsList = statClient.getStats(events.getFirst().getCreatedOn().minusSeconds(1),
-                LocalDateTime.now(), uris, false);
-
-        List<EventShortDto> result = events.stream().map(event -> {
-
-                    Optional<StatsDto> stat = statsList.stream()
-                            .filter(statsDto -> statsDto.getUri().equals("/events/" + event.getId()))
-                            .findFirst();
-                    return EventMapper.mapToShortDto(event, stat.isPresent() ? stat.get().getHits() : 0L);
-                })
-                .toList();
-        List<EventShortDto> resultList = new ArrayList<>(result);
-
-        switch (inputFilter.getSort()) {
-            case EVENT_DATE -> resultList.sort(Comparator.comparing(EventShortDto::getEventDate));
-            case VIEWS -> resultList.sort(Comparator.comparing(EventShortDto::getViews).reversed());
-        }
-
-        var ids = resultList.stream().map(EventShortDto::getId).toList();
-        Map<Long, List<ParticipationRequest>> confirmedRequests = requestService.prepareConfirmedRequests(ids);
-
-        resultList.forEach(r -> {
-            var requests = confirmedRequests.get(r.getId());
-
-            r.setConfirmedRequests(requests != null ? requests.size() : 0);
-        });
-
         try {
-            EndpointHitDto requestBody = EndpointHitDto
-                    .builder().app(serviceName)
-                    .ip(httpServletRequest.getRemoteAddr())
-                    .uri(httpServletRequest.getRequestURI())
-                    .timestamp(LocalDateTime.now())
-                    .build();
-            statClient.saveHit(requestBody);
-            log.info("Сохранение статистики.");
-        } catch (SaveStatsException e) {
-            log.error("Не удалось сохранить статистику.");
-        }
+            List<StatsDto> statsList = statClient.getStats(events.getFirst().getCreatedOn().minusSeconds(1),
+                    LocalDateTime.now(), urisList, false);
 
-        return resultList;
+
+            List<EventShortDto> result = events.stream().map(event -> {
+
+                        Optional<StatsDto> stat = statsList.stream()
+                                .filter(statsDto -> statsDto.getUri().equals("/events/" + event.getId()))
+                                .findFirst();
+                        return EventMapper.mapToShortDto(event, stat.isPresent() ? stat.get().getHits() : 0L);
+                    })
+                    .toList();
+            List<EventShortDto> resultList = new ArrayList<>(result);
+
+            switch (inputFilter.getSort()) {
+                case EVENT_DATE -> resultList.sort(Comparator.comparing(EventShortDto::getEventDate));
+                case VIEWS -> resultList.sort(Comparator.comparing(EventShortDto::getViews).reversed());
+            }
+
+            var ids = resultList.stream().map(EventShortDto::getId).toList();
+            Map<Long, List<ParticipationRequest>> confirmedRequests = requestService.prepareConfirmedRequests(ids);
+
+            resultList.forEach(r -> {
+                var requests = confirmedRequests.get(r.getId());
+
+                r.setConfirmedRequests(requests != null ? requests.size() : 0);
+            });
+
+            try {
+                EndpointHitDto requestBody = EndpointHitDto
+                        .builder().app(serviceName)
+                        .ip(httpServletRequest.getRemoteAddr())
+                        .uri(httpServletRequest.getRequestURI())
+                        .timestamp(LocalDateTime.now())
+                        .build();
+                statClient.saveHit(requestBody);
+                log.info("Сохранение статистики.");
+            } catch (FeignException e) {
+                log.error("Не удалось сохранить статистику.");
+            }
+
+            return resultList;
+        } catch (FeignException e) {
+            throw new StatsServerUnavailable(e.getMessage(), e);
+        }
     }
 
     //public Получение подробной информации об опубликованном событии по его идентификатору
@@ -279,31 +290,34 @@ public class EventServiceImpl implements EventService {
         if (event.getState() != State.PUBLISHED)
             throw new NotFoundException("Посмотреть можно только опубликованное событие.");
 
-
-        Optional<StatsDto> stat = statClient.getStats(event.getCreatedOn().minusSeconds(1),
-                        LocalDateTime.now(), "/events/" + event.getId(), true).stream().findFirst();
-
-        EventFullDto result = EventMapper.mapToFullDto(event, stat.isPresent() ? stat.get().getHits() : 0L);
-
-        List<ParticipationRequest> confirmedRequests = requestService
-                .prepareConfirmedRequests(List.of(event.getId())).get(event.getId());
-        result.setConfirmedRequests(confirmedRequests != null ? confirmedRequests.size() : 0);
-
         try {
-            EndpointHitDto requestBody = EndpointHitDto
-                    .builder().app(serviceName)
-                    .ip(httpServletRequest.getRemoteAddr())
-                    .uri(httpServletRequest.getRequestURI())
-                    .timestamp(LocalDateTime.now())
-                    .build();
+            Optional<StatsDto> stat = statClient.getStats(event.getCreatedOn().minusSeconds(1),
+                    LocalDateTime.now(), List.of("/events/" + event.getId()), true).stream().findFirst();
 
-            statClient.saveHit(requestBody);
-            log.info("Сохранение статистики.");
-        } catch (SaveStatsException e) {
-            log.error("Не удалось сохранить статистику.");
+            EventFullDto result = EventMapper.mapToFullDto(event, stat.isPresent() ? stat.get().getHits() : 0L);
+
+            List<ParticipationRequest> confirmedRequests = requestService
+                    .prepareConfirmedRequests(List.of(event.getId())).get(event.getId());
+            result.setConfirmedRequests(confirmedRequests != null ? confirmedRequests.size() : 0);
+
+            try {
+                EndpointHitDto requestBody = EndpointHitDto
+                        .builder().app(serviceName)
+                        .ip(httpServletRequest.getRemoteAddr())
+                        .uri(httpServletRequest.getRequestURI())
+                        .timestamp(LocalDateTime.now())
+                        .build();
+
+                statClient.saveHit(requestBody);
+                log.info("Сохранение статистики.");
+            } catch (FeignException e) {
+                log.error("Не удалось сохранить статистику.");
+            }
+
+            return result;
+        } catch (FeignException e) {
+            throw new StatsServerUnavailable(e.getMessage(), e);
         }
-
-        return result;
     }
 
     // admin Эндпоинт возвращает полную информацию обо всех событиях подходящих под переданные условия
@@ -336,23 +350,27 @@ public class EventServiceImpl implements EventService {
 
         String uris = String.join(", ", urisList);
 
-        List<StatsDto> statsList = statClient.getStats(events.getFirst().getCreatedOn().minusSeconds(1),
-                LocalDateTime.now(), uris, false);
-        var ids = events.stream().map(Event::getId).toList();
-        Map<Long, List<ParticipationRequest>> confirmedRequests = requestService.prepareConfirmedRequests(ids);
+        try {
+            List<StatsDto> statsList = statClient.getStats(events.getFirst().getCreatedOn().minusSeconds(1),
+                    LocalDateTime.now(), urisList, false);
+            var ids = events.stream().map(Event::getId).toList();
+            Map<Long, List<ParticipationRequest>> confirmedRequests = requestService.prepareConfirmedRequests(ids);
 
-        return events.stream().map(event -> {
+            return events.stream().map(event -> {
 
-                    Optional<StatsDto> stat = statsList.stream()
-                            .filter(statsDto -> statsDto.getUri().equals("/events/" + event.getId()))
-                            .findFirst();
-                    var requests = confirmedRequests.get(event.getId());
-                    var r = EventMapper.mapToFullDto(event, stat.isPresent() ? stat.get().getHits() : 0L);
+                        Optional<StatsDto> stat = statsList.stream()
+                                .filter(statsDto -> statsDto.getUri().equals("/events/" + event.getId()))
+                                .findFirst();
+                        var requests = confirmedRequests.get(event.getId());
+                        var r = EventMapper.mapToFullDto(event, stat.isPresent() ? stat.get().getHits() : 0L);
 
-                    r.setConfirmedRequests(requests != null ? requests.size() : 0);
-                    return r;
-                })
-                .toList();
+                        r.setConfirmedRequests(requests != null ? requests.size() : 0);
+                        return r;
+                    })
+                    .toList();
+        } catch (FeignException e) {
+            throw new StatsServerUnavailable(e.getMessage(), e);
+        }
 
     }
 
@@ -413,16 +431,20 @@ public class EventServiceImpl implements EventService {
         }
         event = eventRepository.save(event);
 
-        Optional<StatsDto> stat = statClient.getStats(event.getCreatedOn().minusSeconds(1), LocalDateTime.now(),
-                        "/events/" + event.getId(), false).stream().findFirst();
+        try {
+            Optional<StatsDto> stat = statClient.getStats(event.getCreatedOn().minusSeconds(1), LocalDateTime.now(),
+                    List.of("/events/" + event.getId()), false).stream().findFirst();
 
-        EventFullDto result = EventMapper.mapToFullDto(event, stat.isPresent() ? stat.get().getHits() : 0L);
+            EventFullDto result = EventMapper.mapToFullDto(event, stat.isPresent() ? stat.get().getHits() : 0L);
 
-        List<ParticipationRequest> confirmedRequests = requestService
-                .prepareConfirmedRequests(List.of(event.getId())).get(event.getId());
-        result.setConfirmedRequests(confirmedRequests != null ? confirmedRequests.size() : 0);
+            List<ParticipationRequest> confirmedRequests = requestService
+                    .prepareConfirmedRequests(List.of(event.getId())).get(event.getId());
+            result.setConfirmedRequests(confirmedRequests != null ? confirmedRequests.size() : 0);
 
-        return result;
+            return result;
+        } catch (FeignException e) {
+            throw new StatsServerUnavailable(e.getMessage(), e);
+        }
     }
 
     @Override

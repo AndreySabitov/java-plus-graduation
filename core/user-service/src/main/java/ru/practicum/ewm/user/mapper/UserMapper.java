@@ -1,7 +1,6 @@
 package ru.practicum.ewm.user.mapper;
 
 import lombok.experimental.UtilityClass;
-import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.dto.user.NewUserRequest;
 import ru.practicum.ewm.dto.user.UserDto;
 import ru.practicum.ewm.dto.user.UserDtoForAdmin;
@@ -9,7 +8,6 @@ import ru.practicum.ewm.dto.user.UserShortDto;
 import ru.practicum.ewm.user.model.User;
 
 import java.util.HashSet;
-import java.util.stream.Collectors;
 
 @UtilityClass
 public class UserMapper {
@@ -40,7 +38,7 @@ public class UserMapper {
         return UserDtoForAdmin.builder()
                 .id(user.getId())
                 .name(user.getName())
-                .forbiddenCommentEvents(user.getForbiddenCommentEvents().stream().map(Event::getId).collect(Collectors.toSet()))
+                //.forbiddenCommentEvents(user.getForbiddenCommentEvents().stream().map(Event::getId).collect(Collectors.toSet()))
                 .email(user.getEmail())
                 .build();
     }

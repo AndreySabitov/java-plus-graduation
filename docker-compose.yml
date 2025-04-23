@@ -17,3 +17,12 @@ services:
       - POSTGRES_PASSWORD=main
       - POSTGRES_USER=main
       - POSTGRES_DB=ewm-main
+  user-db:
+    image: postgres:16.1
+    container_name: postgres-user-service-db
+    ports:
+      - "6432:5432"
+    environment:
+      - POSTGRES_PASSWORD=user
+      - POSTGRES_USER=user
+      - POSTGRES_DB=user-db

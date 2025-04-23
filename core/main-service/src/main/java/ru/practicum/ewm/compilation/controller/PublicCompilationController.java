@@ -3,7 +3,7 @@ package ru.practicum.ewm.compilation.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.compilation.dto.CompilationDto;
+import ru.practicum.ewm.dto.comlication.CompilationDto;
 import ru.practicum.ewm.compilation.service.CompilationService;
 
 import java.util.List;

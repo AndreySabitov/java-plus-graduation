@@ -2,10 +2,10 @@ package ru.practicum.ewm.user.mapper;
 
 import lombok.experimental.UtilityClass;
 import ru.practicum.ewm.event.model.Event;
-import ru.practicum.ewm.user.dto.NewUserRequest;
-import ru.practicum.ewm.user.dto.UserDto;
-import ru.practicum.ewm.user.dto.UserDtoForAdmin;
-import ru.practicum.ewm.user.dto.UserShortDto;
+import ru.practicum.ewm.dto.user.NewUserRequest;
+import ru.practicum.ewm.dto.user.UserDto;
+import ru.practicum.ewm.dto.user.UserDtoForAdmin;
+import ru.practicum.ewm.dto.user.UserShortDto;
 import ru.practicum.ewm.user.model.User;
 
 import java.util.HashSet;

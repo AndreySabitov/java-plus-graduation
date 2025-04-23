@@ -3,7 +3,7 @@ package ru.practicum.ewm.comment.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.comment.dto.CommentDto;
+import ru.practicum.ewm.dto.comment.CommentDto;
 import ru.practicum.ewm.comment.enums.SortType;
 import ru.practicum.ewm.comment.service.CommentService;
 

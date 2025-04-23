@@ -1,7 +1,7 @@
 package ru.practicum.ewm.partrequest.mapper;
 
 import lombok.experimental.UtilityClass;
-import ru.practicum.ewm.partrequest.dto.ParticipationRequestDto;
+import ru.practicum.ewm.dto.partrequest.ParticipationRequestDto;
 import ru.practicum.ewm.partrequest.model.ParticipationRequest;
 
 import java.util.List;

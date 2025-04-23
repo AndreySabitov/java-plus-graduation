@@ -7,10 +7,10 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.event.dto.EventFullDto;
-import ru.practicum.ewm.event.dto.EventPublicFilter;
-import ru.practicum.ewm.event.dto.EventShortDto;
-import ru.practicum.ewm.event.enums.SortType;
+import ru.practicum.ewm.dto.event.EventFullDto;
+import ru.practicum.ewm.dto.event.EventPublicFilter;
+import ru.practicum.ewm.dto.event.EventShortDto;
+import ru.practicum.ewm.dto.event.enums.SortType;
 import ru.practicum.ewm.event.service.EventService;
 import ru.practicum.ewm.exception.InvalidDateTimeException;
 

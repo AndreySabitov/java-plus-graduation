@@ -1,4 +1,4 @@
-package ru.practicum.ewm.user.service;
+package ru.practicum.ewm.service;
 
 import ru.practicum.ewm.dto.user.NewUserRequest;
 import ru.practicum.ewm.dto.user.UserDto;
@@ -12,4 +12,8 @@ public interface UserService {
     UserDto saveUser(NewUserRequest newUserRequest);
 
     void deleteUser(Long id);
+
+    UserDto findById(Long userId);
+
+    boolean existsById(Long userId);
 }

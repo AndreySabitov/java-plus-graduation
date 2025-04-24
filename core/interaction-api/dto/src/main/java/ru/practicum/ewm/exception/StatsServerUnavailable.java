@@ -1,4 +1,4 @@
-package ru.practicum.ewm.stats.exceptions;
+package ru.practicum.ewm.exception;
 
 public class StatsServerUnavailable extends RuntimeException {
     public StatsServerUnavailable(String message, Exception exception) {

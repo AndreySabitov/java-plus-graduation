@@ -8,15 +8,51 @@ spring:
         locator:
           enabled: true
       routes:
-        - id: admin_route
+        - id: admin_categories_route
           uri: lb://main-service
           predicates:
-            - Path=/admin/**
-        - id: users_route
+            - Path=/admin/categories/**
+        - id: categories_route
           uri: lb://main-service
           predicates:
-            - Path=/users/{userId}/**
-        - id: public_routes
+            - Path=/categories/**
+        - id: admin_comments_route
           uri: lb://main-service
           predicates:
-            - Path=/{segment:(?:categories|comments|compilations|events)}/**
+            - Path=/admin/comments/**
+        - id: private_comments_route
+          uri: lb://main-service
+          predicates:
+            - Path=/users/{userId}/comments/**
+        - id: public_comments_route
+          uri: lb://main-service
+          predicates:
+            - Path=/comments/**
+        - id: admin_compilations_route
+          uri: lb://main-service
+          predicates:
+            - Path=/admin/compilations/**
+        - id: public_compilations_route
+          uri: lb://main-service
+          predicates:
+            - Path=/compilations/**
+        - id: admin_events_route
+          uri: lb://main-service
+          predicates:
+            - Path=/admin/events/**
+        - id: private_events_route
+          uri: lb://main-service
+          predicates:
+            - Path=/users/{userId}/events/**
+        - id: public_events_route
+          uri: lb://main-service
+          predicates:
+            - Path=/events/**
+        - id: requests_route
+          uri: lb://main-service
+          predicates:
+            - Path=/users/{userId}/requests/**
+        - id: admin_users_route
+          uri: lb://user-service
+          predicates:
+            - Path=/admin/users/**

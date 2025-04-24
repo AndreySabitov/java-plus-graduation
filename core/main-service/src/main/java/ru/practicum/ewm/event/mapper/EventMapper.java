@@ -5,18 +5,18 @@ import ru.practicum.ewm.category.mapper.CategoryMapper;
 import ru.practicum.ewm.category.model.Category;
 import ru.practicum.ewm.dto.event.EventFullDto;
 import ru.practicum.ewm.dto.event.EventShortDto;
-import ru.practicum.ewm.dto.event.NewEventDto;
-import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.dto.event.Location;
+import ru.practicum.ewm.dto.event.NewEventDto;
 import ru.practicum.ewm.dto.event.enums.State;
-import ru.practicum.ewm.user.mapper.UserMapper;
-import ru.practicum.ewm.user.model.User;
+import ru.practicum.ewm.dto.user.UserDto;
+import ru.practicum.ewm.dto.user.UserShortDto;
+import ru.practicum.ewm.event.model.Event;
 
 import java.time.LocalDateTime;
 
 @UtilityClass
 public class EventMapper {
-    public Event mapToEvent(NewEventDto eventDto, Category category, User initiator) {
+    public Event mapToEvent(NewEventDto eventDto, Category category, Long userId) {
         return Event.builder()
                 .eventDate(eventDto.getEventDate())
                 .annotation(eventDto.getAnnotation())
@@ -31,12 +31,12 @@ public class EventMapper {
                 .lon(eventDto.getLocation().getLon())
                 .participantLimit(eventDto.getParticipantLimit())
                 .requestModeration(eventDto.getRequestModeration())
-                .initiator(initiator)
+                .initiatorId(userId)
                 .commenting(eventDto.getCommenting())
                 .build();
     }
 
-    public EventFullDto mapToFullDto(Event event, Long views) {
+    public EventFullDto mapToFullDto(Event event, Long views, UserDto userDto) {
         return EventFullDto.builder()
                 .id(event.getId())
                 .annotation(event.getAnnotation())
@@ -46,7 +46,10 @@ public class EventMapper {
                 .publishedOn(event.getPublishedOn())
                 .description(event.getDescription())
                 .eventDate(event.getEventDate())
-                .initiator(UserMapper.toUserShortDto(event.getInitiator()))
+                .initiator(UserShortDto.builder()
+                        .name(userDto.getName())
+                        .id(userDto.getId())
+                        .build())
                 .location(Location.builder().lat(event.getLat()).lon(event.getLon()).build())
                 .paid(event.getPaid())
                 .views(views)
@@ -58,7 +61,7 @@ public class EventMapper {
                 .build();
     }
 
-    public EventShortDto mapToShortDto(Event event, Long views) {
+    public EventShortDto mapToShortDto(Event event, Long views, UserDto userDto) {
         return EventShortDto.builder()
                 .annotation(event.getAnnotation())
                 .category(CategoryMapper.toCategoryDto(event.getCategory()))
@@ -66,7 +69,10 @@ public class EventMapper {
                 .eventDate(event.getEventDate())
                 .publishedOn(event.getPublishedOn())
                 .id(event.getId())
-                .initiator(UserMapper.toUserShortDto(event.getInitiator()))
+                .initiator(UserShortDto.builder()
+                        .id(userDto.getId())
+                        .name(userDto.getName())
+                        .build())
                 .paid(event.getPaid())
                 .title(event.getTitle())
                 .views(views)

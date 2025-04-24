@@ -8,7 +8,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    show_sql: true
+    show_sql: false
 
   sql:
     init:
@@ -16,6 +16,6 @@ spring:
 
   datasource:
     driverClassName: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/ewm-main
-    username: main
-    password: main
+    url: jdbc:postgresql://localhost:6432/user-db
+    username: user
+    password: user

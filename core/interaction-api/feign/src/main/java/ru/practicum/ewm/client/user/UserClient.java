@@ -24,4 +24,10 @@ public interface UserClient {
 
     @DeleteMapping("/{userId}")
     void deleteUser(@PathVariable Long userId) throws FeignException;
+
+    @GetMapping("/{userId}")
+    UserDto findById(@PathVariable Long userId) throws FeignException;
+
+    @GetMapping("/{userId}/exists")
+    Boolean checkExistsById(@PathVariable Long userId) throws FeignException;
 }

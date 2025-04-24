@@ -1,19 +1,17 @@
-package ru.practicum.ewm.user.mapper;
+package ru.practicum.ewm.mapper;
 
 import lombok.experimental.UtilityClass;
 import ru.practicum.ewm.dto.user.NewUserRequest;
 import ru.practicum.ewm.dto.user.UserDto;
 import ru.practicum.ewm.dto.user.UserDtoForAdmin;
 import ru.practicum.ewm.dto.user.UserShortDto;
-import ru.practicum.ewm.user.model.User;
-
-import java.util.HashSet;
+import ru.practicum.ewm.model.User;
 
 @UtilityClass
 public class UserMapper {
     public User toUser(NewUserRequest newUserRequest) {
         return User.builder()
-                .forbiddenCommentEvents(new HashSet<>())
+              //  .forbiddenCommentEvents(new HashSet<>())
                 .email(newUserRequest.getEmail())
                 .name(newUserRequest.getName())
                 .build();

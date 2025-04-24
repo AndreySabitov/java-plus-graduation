@@ -1,16 +1,17 @@
-package ru.practicum.ewm.user.service;
+package ru.practicum.ewm.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.ewm.exception.DuplicateException;
-import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.dto.user.NewUserRequest;
 import ru.practicum.ewm.dto.user.UserDto;
-import ru.practicum.ewm.user.mapper.UserMapper;
-import ru.practicum.ewm.user.repository.UserRepository;
+import ru.practicum.ewm.exception.DuplicateException;
+import ru.practicum.ewm.exception.NotFoundException;
+import ru.practicum.ewm.mapper.UserMapper;
+import ru.practicum.ewm.repository.UserRepository;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getAllUsers(List<Long> ids, Integer from, Integer size) {
-        PageRequest pageRequest = PageRequest.of(from / size, size);
+        PageRequest pageRequest = PageRequest.of(from / size, size, Sort.by("id"));
 
         if (ids.isEmpty()) {
             return userRepository.findAll(pageRequest).getContent().stream()
@@ -53,5 +54,16 @@ public class UserServiceImpl implements UserService {
             throw new NotFoundException("Пользователь не найден");
         }
         userRepository.deleteById(id);
+    }
+
+    @Override
+    public UserDto findById(Long userId) {
+        return UserMapper.toUserDto(userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден")));
+    }
+
+    @Override
+    public boolean existsById(Long userId) {
+        return userRepository.existsById(userId);
     }
 }

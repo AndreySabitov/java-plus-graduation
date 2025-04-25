@@ -1,4 +1,4 @@
-package ru.practicum.ewm.stats;
+package ru.practicum.ewm.dto.stats;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;

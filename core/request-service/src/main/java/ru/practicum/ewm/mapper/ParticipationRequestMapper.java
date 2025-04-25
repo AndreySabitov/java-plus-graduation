@@ -1,8 +1,8 @@
-package ru.practicum.ewm.partrequest.mapper;
+package ru.practicum.ewm.mapper;
 
 import lombok.experimental.UtilityClass;
 import ru.practicum.ewm.dto.partrequest.ParticipationRequestDto;
-import ru.practicum.ewm.partrequest.model.ParticipationRequest;
+import ru.practicum.ewm.model.ParticipationRequest;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ public class ParticipationRequestMapper {
         return ParticipationRequestDto.builder()
                 .id(request.getId())
                 .requester(request.getRequesterId())
-                .event(request.getEvent().getId())
+                .event(request.getEventId())
                 .created(request.getCreated())
                 .status(request.getStatus())
                 .build();

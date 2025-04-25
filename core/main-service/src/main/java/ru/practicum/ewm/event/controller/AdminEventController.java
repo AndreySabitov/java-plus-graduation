@@ -73,7 +73,7 @@ public class AdminEventController {
         try {
             return eventService.updateEventAdmin(eventId, updateEventAdminRequest);
         } catch (Exception e) {
-            log.error("При запуске updateEvent c eventId" + eventId + ", параметрами " + updateEventAdminRequest, e);
+            log.error("При запуске updateEvent c eventId = " + eventId + ", параметрами " + updateEventAdminRequest, e);
             throw e;
         }
     }

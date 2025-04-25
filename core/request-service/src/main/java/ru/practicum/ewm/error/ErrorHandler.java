@@ -30,38 +30,6 @@ public class ErrorHandler {
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
-    @ExceptionHandler(OperationFailedException.class)
-    public ErrorResponse handleConflictDataException(OperationFailedException e) {
-        String message = e.getMessage();
-        log.debug("Получен статус 409 CONFLICT {}", message, e);
-        return new ErrorResponse(message);
-    }
-
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(InvalidDateTimeException.class)
-    public ErrorResponse handleConflictDataException(InvalidDateTimeException e) {
-        String message = e.getMessage();
-        log.debug("Получен статус 400 BAD_REQUEST {}", message, e);
-        return new ErrorResponse(message);
-    }
-
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(NotFoundRecordInBDException.class)
-    public ErrorResponse handleConflictDataException(NotFoundRecordInBDException e) {
-        String message = e.getMessage();
-        log.debug("Получен статус 400 BAD_REQUEST {}", message, e);
-        return new ErrorResponse(message);
-    }
-
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(InvalidSortException.class)
-    public ErrorResponse handleConflictDataException(InvalidSortException e) {
-        String message = e.getMessage();
-        log.debug("Получен статус 400 BAD_REQUEST {}", message, e);
-        return new ErrorResponse(message);
-    }
-
-    @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler(ConflictDataException.class)
     public ErrorResponse handleConflictDataException(ConflictDataException e) {
         String message = e.getMessage();
@@ -73,7 +41,7 @@ public class ErrorHandler {
     @ExceptionHandler(Exception.class)
     public ErrorResponse handleAllExceptions(Exception e) {
         log.debug("Получен статус 500 INTERNAL_SERVER_ERROR {}", e.getMessage(), e);
-        return new ErrorResponse("Ой у нас что-то сломалось в main-service :)");
+        return new ErrorResponse("Ой у нас что-то сломалось в request-service :)");
     }
 
     @ExceptionHandler

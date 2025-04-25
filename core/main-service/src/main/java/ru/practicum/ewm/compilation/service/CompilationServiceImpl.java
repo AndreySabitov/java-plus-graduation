@@ -21,7 +21,7 @@ import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.client.user.StatClient;
 import ru.practicum.ewm.exception.StatsServerUnavailable;
-import ru.practicum.ewm.stats.StatsDto;
+import ru.practicum.ewm.dto.stats.StatsDto;
 
 import java.time.LocalDateTime;
 import java.util.*;

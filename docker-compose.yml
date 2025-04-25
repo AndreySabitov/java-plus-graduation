@@ -26,3 +26,12 @@ services:
       - POSTGRES_PASSWORD=user
       - POSTGRES_USER=user
       - POSTGRES_DB=user-db
+  request-db:
+    image: postgres:16.1
+    container_name: postgres-request-service-db
+    ports:
+      - "6433:5432"
+    environment:
+      - POSTGRES_PASSWORD=request
+      - POSTGRES_USER=request
+      - POSTGRES_DB=request-db

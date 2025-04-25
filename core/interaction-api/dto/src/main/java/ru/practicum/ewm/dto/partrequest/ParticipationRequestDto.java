@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import static ru.practicum.ewm.utils.date.DateTimeFormat.TIME_PATTERN;
 
 @Getter
+@Setter
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor

@@ -49,7 +49,7 @@ spring:
           predicates:
             - Path=/events/**
         - id: requests_route
-          uri: lb://main-service
+          uri: lb://request-service
           predicates:
             - Path=/users/{userId}/requests/**
         - id: admin_users_route

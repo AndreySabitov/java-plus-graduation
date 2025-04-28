@@ -8,15 +8,15 @@ services:
       - POSTGRES_PASSWORD=stat
       - POSTGRES_USER=stat
       - POSTGRES_DB=ewm-stats
-  ewm-db:
+  event-db:
     image: postgres:16.1
     container_name: postgres-ewm-main-db
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_PASSWORD=main
-      - POSTGRES_USER=main
-      - POSTGRES_DB=ewm-main
+      - POSTGRES_PASSWORD=event
+      - POSTGRES_USER=event
+      - POSTGRES_DB=event-db
   user-db:
     image: postgres:16.1
     container_name: postgres-user-service-db
@@ -35,3 +35,12 @@ services:
       - POSTGRES_PASSWORD=request
       - POSTGRES_USER=request
       - POSTGRES_DB=request-db
+  comment-db:
+    image: postgres:16.1
+    container_name: postgres-comment-service-db
+    ports:
+      - "6543:5432"
+    environment:
+      - POSTGRES_PASSWORD=comment
+      - POSTGRES_USER=comment
+      - POSTGRES_DB=comment-db

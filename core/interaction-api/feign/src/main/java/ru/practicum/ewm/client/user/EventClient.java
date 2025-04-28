@@ -14,4 +14,7 @@ public interface EventClient {
     @PutMapping("/{eventId}")
     void updateConfirmedRequests(@PathVariable Long eventId, @RequestParam Integer confirmedRequests)
             throws FeignException;
+
+    @GetMapping
+    boolean checkExistsById(@RequestParam Long eventId) throws FeignException;
 }

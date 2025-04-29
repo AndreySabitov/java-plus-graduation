@@ -21,4 +21,6 @@ public interface ParticipationRequestService {
     List<ParticipationRequestDto> findAllById(List<Long> requestIds);
 
     void updateRequestStatus(Long requestId, Status status);
+
+    void deleteByRequesterId(Long requesterId);
 }

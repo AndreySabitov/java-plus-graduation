@@ -11,4 +11,6 @@ public interface BanCommentRepository extends JpaRepository<BanComment, Long> {
     List<BanComment> findAllByUserId(Long userId);
 
     void deleteByEventIdAndUserId(Long eventId, Long userId);
+
+    void deleteByUserId(Long userId);
 }

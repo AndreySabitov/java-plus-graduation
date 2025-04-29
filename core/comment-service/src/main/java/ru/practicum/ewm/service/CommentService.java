@@ -27,4 +27,6 @@ public interface CommentService {
     void deleteLike(Long userId, Long commentId);
 
     CommentDto getComment(Long id);
+
+    void deleteCommentsOfUser(Long userId);
 }

@@ -132,9 +132,12 @@ public class CompilationServiceImpl implements CompilationService {
         }
         LocalDateTime minTime = events.stream().map(Event::getCreatedOn).min(Comparator.comparing(Function.identity())).get();
         List<String> urisList = events.stream().map(event -> "/events/" + event.getId()).toList();
-        Set<Long> userIds = events.stream().map(Event::getInitiatorId).collect(Collectors.toSet());
+        List<Long> userIds = events.stream()
+                .map(Event::getInitiatorId)
+                .distinct()
+                .toList();
         Map<Long, UserDto> usersMap = userClient
-                .getAllUsers(userIds.stream().toList(), 0, userIds.size()).stream()
+                .getAllUsers(userIds, 0, userIds.size()).stream()
                 .collect(Collectors.toMap(UserDto::getId, Function.identity()));
 
         List<StatsDto> statsList = statClient.getStats(minTime.minusSeconds(1), LocalDateTime.now(), urisList,

@@ -6,6 +6,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.ewm.client.CommentClient;
+import ru.practicum.ewm.client.EventClient;
+import ru.practicum.ewm.client.ParticipationRequestClient;
 import ru.practicum.ewm.dto.user.NewUserRequest;
 import ru.practicum.ewm.dto.user.UserDto;
 import ru.practicum.ewm.exception.DuplicateException;
@@ -22,6 +25,9 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final EventClient eventClient;
+    private final ParticipationRequestClient requestClient;
+    private final CommentClient commentClient;
 
     @Override
     public List<UserDto> getAllUsers(List<Long> ids, Integer from, Integer size) {
@@ -53,6 +59,9 @@ public class UserServiceImpl implements UserService {
         if (!userRepository.existsById(id)) {
             throw new NotFoundException("Пользователь не найден");
         }
+        eventClient.deleteEventsByUser(id);
+        requestClient.deleteRequestsOfUser(id);
+        commentClient.deleteCommentsOfUser(id);
         userRepository.deleteById(id);
     }
 

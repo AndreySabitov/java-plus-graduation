@@ -21,6 +21,9 @@ public interface EventClient {
     @GetMapping
     boolean checkExistsById(@RequestParam Long eventId) throws FeignException;
 
+    @DeleteMapping
+    void deleteEventsByUser(@RequestParam Long userId) throws FeignException;
+
     @GetMapping("/{eventId}")
     default EventFullDto findEventById(Long eventId, Throwable throwable) {
         throw new ServerUnavailable("Event Server unavailable");

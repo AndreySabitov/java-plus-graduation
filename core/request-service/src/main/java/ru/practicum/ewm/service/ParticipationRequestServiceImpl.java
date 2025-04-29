@@ -135,6 +135,11 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         request.setStatus(status);
     }
 
+    @Override
+    public void deleteByRequesterId(Long requesterId) {
+        requestRepository.deleteByRequesterId(requesterId);
+    }
+
     private void checkExistsUserById(Long userId) {
         if (!userClient.checkExistsById(userId)) {
             throw new NotFoundException("Пользователь c id: " + userId + " не найден");

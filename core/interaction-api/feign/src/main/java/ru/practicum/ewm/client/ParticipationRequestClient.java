@@ -3,10 +3,7 @@ package ru.practicum.ewm.client;
 import feign.FeignException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.dto.partrequest.ParticipationRequestDto;
 import ru.practicum.ewm.exception.ServerUnavailable;
 
@@ -34,6 +31,9 @@ public interface ParticipationRequestClient {
     @CircuitBreaker(name = "defaultBreaker", fallbackMethod = "updateRequestStatusFallback")
     @PutMapping("/{requestId}")
     void updateRequestStatus(@PathVariable Long requestId, @RequestParam String status) throws FeignException;
+
+    @DeleteMapping
+    void deleteRequestsOfUser(@RequestParam Long userId) throws FeignException;
 
     @GetMapping("/prepare-confirmed-requests")
     default Map<Long, List<ParticipationRequestDto>> prepareConfirmedRequestsFallback(List<Long> eventIds,

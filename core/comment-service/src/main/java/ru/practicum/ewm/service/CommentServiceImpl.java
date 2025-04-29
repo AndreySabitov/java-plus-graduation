@@ -177,6 +177,12 @@ public class CommentServiceImpl implements CommentService {
         return CommentMapper.toCommentDto(comment, event.getAnnotation(), user.getName());
     }
 
+    @Override
+    public void deleteCommentsOfUser(Long userId) {
+        commentRepository.deleteByAuthorId(userId);
+        banRepository.deleteByUserId(userId);
+    }
+
 
     @Transactional
     @Override

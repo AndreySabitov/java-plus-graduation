@@ -25,4 +25,9 @@ public class InternalEventController {
     public boolean checkExistsById(@RequestParam Long eventId) {
         return eventService.checkExistsById(eventId);
     }
+
+    @DeleteMapping
+    public void deleteEventsByUser(@RequestParam Long userId) {
+        eventService.deleteEventsByUser(userId);
+    }
 }

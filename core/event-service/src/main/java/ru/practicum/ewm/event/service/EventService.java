@@ -35,4 +35,6 @@ public interface EventService {
     void updateConfirmedRequests(Long eventId, Integer confirmedRequests);
 
     boolean checkExistsById(Long eventId);
+
+    void deleteEventsByUser(Long userId);
 }

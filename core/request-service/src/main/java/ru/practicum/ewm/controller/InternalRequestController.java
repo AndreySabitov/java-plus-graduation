@@ -34,7 +34,12 @@ public class InternalRequestController {
     }
 
     @PutMapping("/{requestId}")
-    void updateRequestStatus(@PathVariable Long requestId, @RequestParam Status status) {
+    public void updateRequestStatus(@PathVariable Long requestId, @RequestParam Status status) {
         requestService.updateRequestStatus(requestId, status);
+    }
+
+    @DeleteMapping
+    public void deleteRequestsOfUser(@RequestParam Long userId) {
+        requestService.deleteByRequesterId(userId);
     }
 }

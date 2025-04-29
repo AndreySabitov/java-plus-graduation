@@ -224,10 +224,11 @@ public class EventServiceImpl implements EventService {
                 .map(event -> "/events/" + event.getId())
                 .toList();
 
-        Set<Long> userIds = events.stream()
+        List<Long> userIds = events.stream()
                 .map(Event::getInitiatorId)
-                .collect(Collectors.toSet());
-        Map<Long, UserDto> users = userClient.getAllUsers(userIds.stream().toList(), 0, userIds.size()).stream()
+                .distinct()
+                .toList();
+        Map<Long, UserDto> users = userClient.getAllUsers(userIds, 0, userIds.size()).stream()
                 .collect(Collectors.toMap(UserDto::getId, Function.identity()));
         List<StatsDto> statsList = statClient.getStats(events.getFirst().getCreatedOn().minusSeconds(1),
                 LocalDateTime.now(), urisList, false);
@@ -340,10 +341,11 @@ public class EventServiceImpl implements EventService {
                 .map(event -> "/events/" + event.getId())
                 .toList();
 
-        Set<Long> userIds = events.stream()
+        List<Long> userIds = events.stream()
                 .map(Event::getInitiatorId)
-                .collect(Collectors.toSet());
-        Map<Long, UserDto> users = userClient.getAllUsers(userIds.stream().toList(), 0, userIds.size()).stream()
+                .distinct()
+                .toList();
+        Map<Long, UserDto> users = userClient.getAllUsers(userIds, 0, userIds.size()).stream()
                 .collect(Collectors.toMap(UserDto::getId, Function.identity()));
 
         List<StatsDto> statsList = statClient.getStats(events.getFirst().getCreatedOn().minusSeconds(1),
@@ -525,6 +527,11 @@ public class EventServiceImpl implements EventService {
     @Override
     public boolean checkExistsById(Long eventId) {
         return eventRepository.existsById(eventId);
+    }
+
+    @Override
+    public void deleteEventsByUser(Long userId) {
+        eventRepository.deleteByInitiatorId(userId);
     }
 
     private void checkFields(NewEventDto dto) {

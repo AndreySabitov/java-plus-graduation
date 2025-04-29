@@ -9,6 +9,12 @@ spring:
       hibernate:
         format_sql: true
     show_sql: false
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+        alphanumeric-ids:
+          enabled: true
 
   sql:
     init:
@@ -19,3 +25,15 @@ spring:
     url: jdbc:postgresql://localhost:5432/event-db
     username: event
     password: event
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      defaultBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10000
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true

@@ -145,9 +145,11 @@ public class CompilationServiceImpl implements CompilationService {
                             .findFirst();
                     if (result.isPresent()) {
                         return EventMapper.mapToShortDto(event, result.get().getHits(),
-                                usersMap.get(event.getInitiatorId()));
+                                usersMap.getOrDefault(event.getInitiatorId(),
+                                        UserDto.builder().id(0L).name("Unknown").build()));
                     } else {
-                        return EventMapper.mapToShortDto(event, 0L, usersMap.get(event.getInitiatorId()));
+                        return EventMapper.mapToShortDto(event, 0L, usersMap.getOrDefault(event.getInitiatorId(),
+                                UserDto.builder().id(0L).name("Unknown").build()));
                     }
                 })
                 .collect(Collectors.toList());

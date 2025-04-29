@@ -33,7 +33,7 @@ public class ErrorHandler {
     @ExceptionHandler(Exception.class)
     public ErrorResponse handleAllExceptions(Exception e) {
         log.debug("Получен статус 500 INTERNAL_SERVER_ERROR {}", e.getMessage(), e);
-        return new ErrorResponse("Ой у нас что-то сломалось :)");
+        return new ErrorResponse("Ой у нас что-то сломалось в user-service :)");
     }
 
     @ExceptionHandler

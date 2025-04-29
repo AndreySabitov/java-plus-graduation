@@ -64,6 +64,10 @@ public class EventServiceImpl implements EventService {
 
         UserDto user = userClient.findById(userId);
 
+        if (user.getName().equals("UNKNOWN")) {
+            throw new ServerUnavailable("User Server unavailable");
+        }
+
         if (eventDto.getCommenting() == null) {
             eventDto.setCommenting(true);
         }

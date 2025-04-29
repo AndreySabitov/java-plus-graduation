@@ -73,7 +73,7 @@ public class ErrorHandler {
     @ExceptionHandler(Exception.class)
     public ErrorResponse handleAllExceptions(Exception e) {
         log.debug("Получен статус 500 INTERNAL_SERVER_ERROR {}", e.getMessage(), e);
-        return new ErrorResponse("Ой у нас что-то сломалось в main-service :)");
+        return new ErrorResponse("Ой у нас что-то сломалось в event-service :)");
     }
 
     @ExceptionHandler
@@ -93,6 +93,12 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidation(final ValidationException e) {
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleServerUnavailable(final ServerUnavailable e) {
         return new ErrorResponse(e.getMessage());
     }
 }

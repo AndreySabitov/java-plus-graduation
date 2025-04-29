@@ -88,7 +88,7 @@ public class CommentServiceImpl implements CommentService {
         if (!userClient.checkExistsById(userId)) {
             throw new NotFoundException("Пользователь не найден");
         }
-        if (eventClient.checkExistsById(eventId)) {
+        if (!eventClient.checkExistsById(eventId)) {
             throw new NotFoundException("Событие не найдено");
         }
         Comment comment = checkComment(commentId);
@@ -183,7 +183,7 @@ public class CommentServiceImpl implements CommentService {
     public UserDtoForAdmin addBanCommited(Long userId, Long eventId) {
         checkEventId(eventId);
         UserDto user = checkUser(userId);
-        if (eventClient.checkExistsById(eventId)) {
+        if (!eventClient.checkExistsById(eventId)) {
             throw new NotFoundException("Событие не найдено");
         }
         if (banRepository.existsByEventIdAndUserId(eventId, userId)) {
@@ -210,7 +210,7 @@ public class CommentServiceImpl implements CommentService {
         if (!userClient.checkExistsById(userId)) {
             throw new NotFoundException("Пользователь не найден");
         }
-        if (eventClient.checkExistsById(eventId)) {
+        if (!eventClient.checkExistsById(eventId)) {
             throw new NotFoundException("Событие не найдено");
         }
         if (!banRepository.existsByEventIdAndUserId(eventId, userId)) {

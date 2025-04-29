@@ -1,8 +1,6 @@
 package ru.practicum.ewm.event.service;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
 import ru.practicum.ewm.dto.event.*;
 import ru.practicum.ewm.dto.partrequest.ParticipationRequestDto;
 

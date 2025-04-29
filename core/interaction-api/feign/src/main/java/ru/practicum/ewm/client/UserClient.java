@@ -1,4 +1,4 @@
-package ru.practicum.ewm.client.user;
+package ru.practicum.ewm.client;
 
 import feign.FeignException;
 import jakarta.validation.Valid;

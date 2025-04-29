@@ -1,12 +1,11 @@
 package ru.practicum.ewm.service;
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.ewm.client.user.EventClient;
-import ru.practicum.ewm.client.user.UserClient;
+import ru.practicum.ewm.client.EventClient;
+import ru.practicum.ewm.client.UserClient;
 import ru.practicum.ewm.dto.event.EventFullDto;
 import ru.practicum.ewm.dto.event.enums.State;
 import ru.practicum.ewm.dto.partrequest.ParticipationRequestDto;
@@ -40,46 +39,38 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
             throw new ValidationException("Не задано id события");
         }
 
-        try {
-            if (!userClient.checkExistsById(userId)) {
-                throw new NotFoundException("Пользователь c id: " + userId + " не найден");
-            }
-
-            EventFullDto event = eventClient.findEventById(eventId);
-
-            if (requestRepository.existsByRequesterIdAndEventId(userId, eventId)) {
-                throw new DuplicateException("Такой запрос уже существует");
-            }
-            if (event.getInitiator().getId().equals(userId)) {
-                throw new ConflictDataException("Пользователь не может создать запрос на участие в своем же событии");
-            }
-            if (!event.getState().equals(State.PUBLISHED)) {
-                throw new ConflictDataException("Нельзя участвовать в неопубликованном событии");
-            }
-            Integer participantLimit = event.getParticipantLimit();
-            Integer confirmedRequests = event.getConfirmedRequests();
-            if (!participantLimit.equals(0) && participantLimit.equals(confirmedRequests)) {
-                throw new ConflictDataException("Лимит запросов на участие в событии уже достигнут");
-            }
-            Status status;
-            if (participantLimit.equals(0) || !event.getRequestModeration()) {
-                status = Status.CONFIRMED;
-                eventClient.updateConfirmedRequests(eventId, ++confirmedRequests);
-            } else status = Status.PENDING;
-
-            ParticipationRequest participationRequest = ParticipationRequest.builder()
-                    .requesterId(userId)
-                    .eventId(event.getId())
-                    .status(status)
-                    .build();
-            return ParticipationRequestMapper.toParticipationRequestDto(requestRepository.save(participationRequest));
-        } catch (FeignException e) {
-            if (e.status() == 404) {
-                throw new NotFoundException(e.getMessage());
-            } else {
-                throw e;
-            }
+        if (!userClient.checkExistsById(userId)) {
+            throw new NotFoundException("Пользователь c id: " + userId + " не найден");
         }
+
+        EventFullDto event = eventClient.findEventById(eventId);
+
+        if (requestRepository.existsByRequesterIdAndEventId(userId, eventId)) {
+            throw new DuplicateException("Такой запрос уже существует");
+        }
+        if (event.getInitiator().getId().equals(userId)) {
+            throw new ConflictDataException("Пользователь не может создать запрос на участие в своем же событии");
+        }
+        if (!event.getState().equals(State.PUBLISHED)) {
+            throw new ConflictDataException("Нельзя участвовать в неопубликованном событии");
+        }
+        Integer participantLimit = event.getParticipantLimit();
+        Integer confirmedRequests = event.getConfirmedRequests();
+        if (!participantLimit.equals(0) && participantLimit.equals(confirmedRequests)) {
+            throw new ConflictDataException("Лимит запросов на участие в событии уже достигнут");
+        }
+        Status status;
+        if (participantLimit.equals(0) || !event.getRequestModeration()) {
+            status = Status.CONFIRMED;
+            eventClient.updateConfirmedRequests(eventId, ++confirmedRequests);
+        } else status = Status.PENDING;
+
+        ParticipationRequest participationRequest = ParticipationRequest.builder()
+                .requesterId(userId)
+                .eventId(event.getId())
+                .status(status)
+                .build();
+        return ParticipationRequestMapper.toParticipationRequestDto(requestRepository.save(participationRequest));
     }
 
     @Transactional

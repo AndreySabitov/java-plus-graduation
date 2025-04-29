@@ -13,9 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.category.model.Category;
 import ru.practicum.ewm.category.repository.CategoryRepository;
-import ru.practicum.ewm.client.user.ParticipationRequestClient;
-import ru.practicum.ewm.client.user.StatClient;
-import ru.practicum.ewm.client.user.UserClient;
+import ru.practicum.ewm.client.ParticipationRequestClient;
+import ru.practicum.ewm.client.StatClient;
+import ru.practicum.ewm.client.UserClient;
 import ru.practicum.ewm.dto.event.*;
 import ru.practicum.ewm.dto.event.enums.State;
 import ru.practicum.ewm.dto.event.enums.StateAction;
@@ -62,160 +62,124 @@ public class EventServiceImpl implements EventService {
         Category category = categoryRepository.findById(eventDto.getCategory())
                 .orElseThrow(() -> new NotFoundException("Категория не найдена"));
 
-        try {
-            UserDto user = userClient.findById(userId);
+        UserDto user = userClient.findById(userId);
 
-            if (eventDto.getCommenting() == null) {
-                eventDto.setCommenting(true);
-            }
-            Event event = eventRepository.save(EventMapper.mapToEvent(eventDto, category, userId));
-            return EventMapper.mapToFullDto(event, 0L, user);
-        } catch (FeignException e) {
-            if (e.status() == 404) {
-                throw new NotFoundException("Пользователь не найден");
-            } else {
-                throw e;
-            }
+        if (eventDto.getCommenting() == null) {
+            eventDto.setCommenting(true);
         }
+        Event event = eventRepository.save(EventMapper.mapToEvent(eventDto, category, userId));
+        return EventMapper.mapToFullDto(event, 0L, user);
     }
 
     @Override
     public List<EventShortDto> getEventsOfUser(Long userId, Integer from, Integer size) {
-        try {
-            UserDto user = userClient.findById(userId);
+        UserDto user = userClient.findById(userId);
 
-            Sort sortByCreatedDate = Sort.by("createdOn");
-            PageRequest pageRequest = PageRequest.of(from / size, size, sortByCreatedDate);
-            List<Event> events = eventRepository.findAllByInitiatorId(userId, pageRequest);
+        Sort sortByCreatedDate = Sort.by("createdOn");
+        PageRequest pageRequest = PageRequest.of(from / size, size, sortByCreatedDate);
+        List<Event> events = eventRepository.findAllByInitiatorId(userId, pageRequest);
 
-            List<String> urisList = events
-                    .stream()
-                    .map(event -> "/events/" + event.getId())
-                    .toList();
+        List<String> urisList = events
+                .stream()
+                .map(event -> "/events/" + event.getId())
+                .toList();
 
 
-            List<StatsDto> statsList = statClient.getStats(events.getFirst().getCreatedOn().minusSeconds(1),
-                    LocalDateTime.now(), urisList, false);
+        List<StatsDto> statsList = statClient.getStats(events.getFirst().getCreatedOn().minusSeconds(1),
+                LocalDateTime.now(), urisList, false);
 
-            return events.stream().map(event -> {
-                        Optional<StatsDto> result = statsList.stream()
-                                .filter(statsDto -> statsDto.getUri().equals("/events/" + event.getId()))
-                                .findFirst();
-                        if (result.isPresent()) {
-                            return EventMapper.mapToShortDto(event, result.get().getHits(), user);
-                        } else {
-                            return EventMapper.mapToShortDto(event, 0L, user);
-                        }
-                    })
-                    .toList();
-        } catch (FeignException e) {
-            if (e.status() == 404) {
-                throw new NotFoundException(e.getMessage());
-            } else if (e.status() == 500) {
-                throw new StatsServerUnavailable(e.getMessage(), e);
-            } else {
-                throw e;
-            }
-        }
+        return events.stream().map(event -> {
+                    Optional<StatsDto> result = statsList.stream()
+                            .filter(statsDto -> statsDto.getUri().equals("/events/" + event.getId()))
+                            .findFirst();
+                    if (result.isPresent()) {
+                        return EventMapper.mapToShortDto(event, result.get().getHits(), user);
+                    } else {
+                        return EventMapper.mapToShortDto(event, 0L, user);
+                    }
+                })
+                .toList();
     }
 
     @Override
     public EventFullDto getEventOfUser(Long userId, Long eventId) {
-        try {
-            UserDto user = userClient.findById(userId);
+        UserDto user = userClient.findById(userId);
 
-            Event event = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException("Событие не найдено"));
-            if (!Objects.equals(event.getInitiatorId(), userId)) {
-                throw new ValidationException("Можно просмотреть только своё событие");
-            }
-            String uri = "/events/" + eventId;
-            List<StatsDto> statsList = statClient.getStats(event.getCreatedOn().minusSeconds(1), LocalDateTime.now(),
-                    List.of(uri), false);
-            Optional<StatsDto> result = statsList.stream().findFirst();
-            if (result.isPresent()) {
-                return EventMapper.mapToFullDto(event, result.get().getHits(), user);
-            } else {
-                return EventMapper.mapToFullDto(event, 0L, user);
-            }
-        } catch (FeignException e) {
-            if (e.status() == 404) {
-                throw new NotFoundException(e.getMessage());
-            } else if (e.status() == 500) {
-                throw new StatsServerUnavailable(e.getMessage(), e);
-            } else {
-                throw e;
-            }
+        Event event = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException("Событие не найдено"));
+        if (!Objects.equals(event.getInitiatorId(), userId)) {
+            throw new ValidationException("Можно просмотреть только своё событие");
+        }
+        String uri = "/events/" + eventId;
+        List<StatsDto> statsList = statClient.getStats(event.getCreatedOn().minusSeconds(1), LocalDateTime.now(),
+                List.of(uri), false);
+        Optional<StatsDto> result = statsList.stream().findFirst();
+        if (result.isPresent()) {
+            return EventMapper.mapToFullDto(event, result.get().getHits(), user);
+        } else {
+            return EventMapper.mapToFullDto(event, 0L, user);
         }
     }
 
     @Override
     @Transactional
     public EventFullDto updateEventOfUser(UpdateEventUserRequest updateRequest, Long userId, Long eventId) {
-        try {
-            UserDto user = userClient.findById(userId);
+        UserDto user = userClient.findById(userId);
 
-            Event event = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException("Событие не найдено"));
-            if (!Objects.equals(event.getInitiatorId(), userId)) {
-                throw new ValidationException("Можно просмотреть только своё событие");
-            }
+        Event event = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException("Событие не найдено"));
+        if (!Objects.equals(event.getInitiatorId(), userId)) {
+            throw new ValidationException("Можно просмотреть только своё событие");
+        }
 
-            if (event.getState() == State.PUBLISHED) {
-                throw new ConflictDataException("Нельзя изменить опубликованное событие");
-            }
+        if (event.getState() == State.PUBLISHED) {
+            throw new ConflictDataException("Нельзя изменить опубликованное событие");
+        }
 
-            if (updateRequest.getAnnotation() != null && !updateRequest.getAnnotation().isBlank()) {
-                event.setAnnotation(updateRequest.getAnnotation());
+        if (updateRequest.getAnnotation() != null && !updateRequest.getAnnotation().isBlank()) {
+            event.setAnnotation(updateRequest.getAnnotation());
+        }
+        if (updateRequest.getCategory() != null) {
+            Category category = categoryRepository.findById(updateRequest.getCategory())
+                    .orElseThrow(() -> new NotFoundException("Категория не найдена"));
+            event.setCategory(category);
+        }
+        if (updateRequest.getDescription() != null && !updateRequest.getDescription().isBlank()) {
+            event.setDescription(updateRequest.getDescription());
+        }
+        if (updateRequest.getEventDate() != null) {
+            if (updateRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
+                throw new ValidationException("Дата начала события должна быть позже чем через 2 часа от текущего" +
+                        " времени");
             }
-            if (updateRequest.getCategory() != null) {
-                Category category = categoryRepository.findById(updateRequest.getCategory())
-                        .orElseThrow(() -> new NotFoundException("Категория не найдена"));
-                event.setCategory(category);
-            }
-            if (updateRequest.getDescription() != null && !updateRequest.getDescription().isBlank()) {
-                event.setDescription(updateRequest.getDescription());
-            }
-            if (updateRequest.getEventDate() != null) {
-                if (updateRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-                    throw new ValidationException("Дата начала события должна быть позже чем через 2 часа от текущего" +
-                            " времени");
-                }
-                event.setEventDate(updateRequest.getEventDate());
-            }
-            if (updateRequest.getLocation() != null) {
-                event.setLat(updateRequest.getLocation().getLat());
-                event.setLon(updateRequest.getLocation().getLon());
-            }
-            if (updateRequest.getPaid() != null) {
-                event.setPaid(updateRequest.getPaid());
-            }
-            if (updateRequest.getCommenting() != null) {
-                event.setCommenting(updateRequest.getCommenting());
-            }
-            if (updateRequest.getParticipantLimit() != null) {
-                event.setParticipantLimit(updateRequest.getParticipantLimit());
-            }
-            if (updateRequest.getRequestModeration() != null) {
-                event.setRequestModeration(updateRequest.getRequestModeration());
-            }
-            if (updateRequest.getTitle() != null && !updateRequest.getTitle().isBlank()) {
-                event.setTitle(updateRequest.getTitle());
-            }
-            if (updateRequest.getStateAction() != null) {
-                if (updateRequest.getStateAction() == StateAction.SEND_TO_REVIEW) {
-                    event.setState(State.PENDING);
-                } else if (updateRequest.getStateAction() == StateAction.CANCEL_REVIEW) {
-                    event.setState(State.CANCELED);
-                }
-            }
-
-            return EventMapper.mapToFullDto(event, 0L, user);
-        } catch (FeignException e) {
-            if (e.status() == 404) {
-                throw new NotFoundException(e.getMessage());
-            } else {
-                throw e;
+            event.setEventDate(updateRequest.getEventDate());
+        }
+        if (updateRequest.getLocation() != null) {
+            event.setLat(updateRequest.getLocation().getLat());
+            event.setLon(updateRequest.getLocation().getLon());
+        }
+        if (updateRequest.getPaid() != null) {
+            event.setPaid(updateRequest.getPaid());
+        }
+        if (updateRequest.getCommenting() != null) {
+            event.setCommenting(updateRequest.getCommenting());
+        }
+        if (updateRequest.getParticipantLimit() != null) {
+            event.setParticipantLimit(updateRequest.getParticipantLimit());
+        }
+        if (updateRequest.getRequestModeration() != null) {
+            event.setRequestModeration(updateRequest.getRequestModeration());
+        }
+        if (updateRequest.getTitle() != null && !updateRequest.getTitle().isBlank()) {
+            event.setTitle(updateRequest.getTitle());
+        }
+        if (updateRequest.getStateAction() != null) {
+            if (updateRequest.getStateAction() == StateAction.SEND_TO_REVIEW) {
+                event.setState(State.PENDING);
+            } else if (updateRequest.getStateAction() == StateAction.CANCEL_REVIEW) {
+                event.setState(State.CANCELED);
             }
         }
+
+        return EventMapper.mapToFullDto(event, 0L, user);
     }
 
     //public Получение событий с возможностью фильтрации
@@ -256,64 +220,54 @@ public class EventServiceImpl implements EventService {
                 .map(event -> "/events/" + event.getId())
                 .toList();
 
-        try {
-            Set<Long> userIds = events.stream()
-                    .map(Event::getInitiatorId)
-                    .collect(Collectors.toSet());
-            Map<Long, UserDto> users = userClient.getAllUsers(userIds.stream().toList(), 0, userIds.size()).stream()
-                    .collect(Collectors.toMap(UserDto::getId, Function.identity()));
-            List<StatsDto> statsList = statClient.getStats(events.getFirst().getCreatedOn().minusSeconds(1),
-                    LocalDateTime.now(), urisList, false);
+        Set<Long> userIds = events.stream()
+                .map(Event::getInitiatorId)
+                .collect(Collectors.toSet());
+        Map<Long, UserDto> users = userClient.getAllUsers(userIds.stream().toList(), 0, userIds.size()).stream()
+                .collect(Collectors.toMap(UserDto::getId, Function.identity()));
+        List<StatsDto> statsList = statClient.getStats(events.getFirst().getCreatedOn().minusSeconds(1),
+                LocalDateTime.now(), urisList, false);
 
 
-            List<EventShortDto> result = events.stream().map(event -> {
+        List<EventShortDto> result = events.stream().map(event -> {
 
-                        Optional<StatsDto> stat = statsList.stream()
-                                .filter(statsDto -> statsDto.getUri().equals("/events/" + event.getId()))
-                                .findFirst();
-                        return EventMapper.mapToShortDto(event, stat.isPresent() ? stat.get().getHits() : 0L,
-                                users.get(event.getInitiatorId()));
-                    })
-                    .toList();
-            List<EventShortDto> resultList = new ArrayList<>(result);
+                    Optional<StatsDto> stat = statsList.stream()
+                            .filter(statsDto -> statsDto.getUri().equals("/events/" + event.getId()))
+                            .findFirst();
+                    return EventMapper.mapToShortDto(event, stat.isPresent() ? stat.get().getHits() : 0L,
+                            users.get(event.getInitiatorId()));
+                })
+                .toList();
+        List<EventShortDto> resultList = new ArrayList<>(result);
 
-            switch (inputFilter.getSort()) {
-                case EVENT_DATE -> resultList.sort(Comparator.comparing(EventShortDto::getEventDate));
-                case VIEWS -> resultList.sort(Comparator.comparing(EventShortDto::getViews).reversed());
-            }
-
-            var ids = resultList.stream().map(EventShortDto::getId).toList();
-            Map<Long, List<ParticipationRequestDto>> confirmedRequests = requestClient.prepareConfirmedRequests(ids);
-
-            resultList.forEach(r -> {
-                var requests = confirmedRequests.get(r.getId());
-
-                r.setConfirmedRequests(requests != null ? requests.size() : 0);
-            });
-
-            try {
-                EndpointHitDto requestBody = EndpointHitDto
-                        .builder().app(serviceName)
-                        .ip(httpServletRequest.getRemoteAddr())
-                        .uri(httpServletRequest.getRequestURI())
-                        .timestamp(LocalDateTime.now())
-                        .build();
-                statClient.saveHit(requestBody);
-                log.info("Сохранение статистики.");
-            } catch (FeignException e) {
-                log.error("Не удалось сохранить статистику.");
-            }
-
-            return resultList;
-        } catch (FeignException e) {
-            if (e.status() == 404) {
-                throw new NotFoundException(e.getMessage());
-            } else if (e.status() == 500) {
-                throw new StatsServerUnavailable(e.getMessage(), e);
-            } else {
-                throw e;
-            }
+        switch (inputFilter.getSort()) {
+            case EVENT_DATE -> resultList.sort(Comparator.comparing(EventShortDto::getEventDate));
+            case VIEWS -> resultList.sort(Comparator.comparing(EventShortDto::getViews).reversed());
         }
+
+        var ids = resultList.stream().map(EventShortDto::getId).toList();
+        Map<Long, List<ParticipationRequestDto>> confirmedRequests = requestClient.prepareConfirmedRequests(ids);
+
+        resultList.forEach(r -> {
+            var requests = confirmedRequests.get(r.getId());
+
+            r.setConfirmedRequests(requests != null ? requests.size() : 0);
+        });
+
+        try {
+            EndpointHitDto requestBody = EndpointHitDto
+                    .builder().app(serviceName)
+                    .ip(httpServletRequest.getRemoteAddr())
+                    .uri(httpServletRequest.getRequestURI())
+                    .timestamp(LocalDateTime.now())
+                    .build();
+            statClient.saveHit(requestBody);
+            log.info("Сохранение статистики.");
+        } catch (FeignException e) {
+            log.error("Не удалось сохранить статистику.");
+        }
+
+        return resultList;
     }
 
     //public Получение подробной информации об опубликованном событии по его идентификатору
@@ -326,42 +280,32 @@ public class EventServiceImpl implements EventService {
         if (event.getState() != State.PUBLISHED)
             throw new NotFoundException("Посмотреть можно только опубликованное событие.");
 
+        UserDto user = userClient.findById(event.getInitiatorId());
+
+        Optional<StatsDto> stat = statClient.getStats(event.getCreatedOn().minusSeconds(1),
+                LocalDateTime.now(), List.of("/events/" + event.getId()), true).stream().findFirst();
+
+        EventFullDto result = EventMapper.mapToFullDto(event, stat.isPresent() ? stat.get().getHits() : 0L, user);
+
+        List<ParticipationRequestDto> confirmedRequests = requestClient
+                .prepareConfirmedRequests(List.of(event.getId())).get(event.getId());
+        result.setConfirmedRequests(confirmedRequests != null ? confirmedRequests.size() : 0);
+
         try {
-            UserDto user = userClient.findById(event.getInitiatorId());
+            EndpointHitDto requestBody = EndpointHitDto
+                    .builder().app(serviceName)
+                    .ip(httpServletRequest.getRemoteAddr())
+                    .uri(httpServletRequest.getRequestURI())
+                    .timestamp(LocalDateTime.now())
+                    .build();
 
-            Optional<StatsDto> stat = statClient.getStats(event.getCreatedOn().minusSeconds(1),
-                    LocalDateTime.now(), List.of("/events/" + event.getId()), true).stream().findFirst();
-
-            EventFullDto result = EventMapper.mapToFullDto(event, stat.isPresent() ? stat.get().getHits() : 0L, user);
-
-            List<ParticipationRequestDto> confirmedRequests = requestClient
-                    .prepareConfirmedRequests(List.of(event.getId())).get(event.getId());
-            result.setConfirmedRequests(confirmedRequests != null ? confirmedRequests.size() : 0);
-
-            try {
-                EndpointHitDto requestBody = EndpointHitDto
-                        .builder().app(serviceName)
-                        .ip(httpServletRequest.getRemoteAddr())
-                        .uri(httpServletRequest.getRequestURI())
-                        .timestamp(LocalDateTime.now())
-                        .build();
-
-                statClient.saveHit(requestBody);
-                log.info("Сохранение статистики.");
-            } catch (FeignException e) {
-                log.error("Не удалось сохранить статистику.");
-            }
-
-            return result;
+            statClient.saveHit(requestBody);
+            log.info("Сохранение статистики.");
         } catch (FeignException e) {
-            if (e.status() == 404) {
-                throw new NotFoundException(e.getMessage());
-            } else if (e.status() == 500) {
-                throw new StatsServerUnavailable(e.getMessage(), e);
-            } else {
-                throw e;
-            }
+            log.error("Не удалось сохранить статистику.");
         }
+
+        return result;
     }
 
     // admin Эндпоинт возвращает полную информацию обо всех событиях подходящих под переданные условия
@@ -392,41 +336,30 @@ public class EventServiceImpl implements EventService {
                 .map(event -> "/events/" + event.getId())
                 .toList();
 
-        try {
-            Set<Long> userIds = events.stream()
-                    .map(Event::getInitiatorId)
-                    .collect(Collectors.toSet());
-            Map<Long, UserDto> users = userClient.getAllUsers(userIds.stream().toList(), 0, userIds.size()).stream()
-                    .collect(Collectors.toMap(UserDto::getId, Function.identity()));
+        Set<Long> userIds = events.stream()
+                .map(Event::getInitiatorId)
+                .collect(Collectors.toSet());
+        Map<Long, UserDto> users = userClient.getAllUsers(userIds.stream().toList(), 0, userIds.size()).stream()
+                .collect(Collectors.toMap(UserDto::getId, Function.identity()));
 
-            List<StatsDto> statsList = statClient.getStats(events.getFirst().getCreatedOn().minusSeconds(1),
-                    LocalDateTime.now(), urisList, false);
-            var ids = events.stream().map(Event::getId).toList();
-            Map<Long, List<ParticipationRequestDto>> confirmedRequests = requestClient.prepareConfirmedRequests(ids);
+        List<StatsDto> statsList = statClient.getStats(events.getFirst().getCreatedOn().minusSeconds(1),
+                LocalDateTime.now(), urisList, false);
+        var ids = events.stream().map(Event::getId).toList();
+        Map<Long, List<ParticipationRequestDto>> confirmedRequests = requestClient.prepareConfirmedRequests(ids);
 
-            return events.stream().map(event -> {
+        return events.stream().map(event -> {
 
-                        Optional<StatsDto> stat = statsList.stream()
-                                .filter(statsDto -> statsDto.getUri().equals("/events/" + event.getId()))
-                                .findFirst();
-                        var requests = confirmedRequests.get(event.getId());
-                        var r = EventMapper.mapToFullDto(event, stat.isPresent() ? stat.get().getHits() : 0L,
-                                users.get(event.getInitiatorId()));
+                    Optional<StatsDto> stat = statsList.stream()
+                            .filter(statsDto -> statsDto.getUri().equals("/events/" + event.getId()))
+                            .findFirst();
+                    var requests = confirmedRequests.get(event.getId());
+                    var r = EventMapper.mapToFullDto(event, stat.isPresent() ? stat.get().getHits() : 0L,
+                            users.get(event.getInitiatorId()));
 
-                        r.setConfirmedRequests(requests != null ? requests.size() : 0);
-                        return r;
-                    })
-                    .toList();
-        } catch (FeignException e) {
-            if (e.status() == 404) {
-                throw new NotFoundException(e.getMessage());
-            } else if (e.status() == 500) {
-                throw new StatsServerUnavailable(e.getMessage(), e);
-            } else {
-                throw e;
-            }
-        }
-
+                    r.setConfirmedRequests(requests != null ? requests.size() : 0);
+                    return r;
+                })
+                .toList();
     }
 
     // admin Редактирование данных любого события администратором. Валидация данных не требуется
@@ -486,28 +419,19 @@ public class EventServiceImpl implements EventService {
         }
         event = eventRepository.save(event);
 
-        try {
-            UserDto user = userClient.findById(event.getInitiatorId());
+        UserDto user = userClient.findById(event.getInitiatorId());
 
-            Optional<StatsDto> stat = statClient.getStats(event.getCreatedOn().minusSeconds(1), LocalDateTime.now(),
-                    List.of("/events/" + event.getId()), false).stream().findFirst();
+        Optional<StatsDto> stat = statClient.getStats(event.getCreatedOn().minusSeconds(1), LocalDateTime.now(),
+                List.of("/events/" + event.getId()), false).stream().findFirst();
 
-            EventFullDto result = EventMapper.mapToFullDto(event, stat.isPresent() ? stat.get().getHits() : 0L, user);
+        EventFullDto result = EventMapper.mapToFullDto(event, stat.isPresent() ? stat.get().getHits() : 0L, user);
 
-            List<ParticipationRequestDto> confirmedRequests = requestClient
-                    .prepareConfirmedRequests(List.of(event.getId())).get(event.getId());
-            result.setConfirmedRequests(confirmedRequests != null ? confirmedRequests.size() : 0);
+        List<ParticipationRequestDto> confirmedRequests = requestClient
+                .prepareConfirmedRequests(List.of(event.getId())).get(event.getId());
+        result.setConfirmedRequests(confirmedRequests != null ? confirmedRequests.size() : 0);
 
-            return result;
-        } catch (FeignException e) {
-            if (e.status() == 404) {
-                throw new NotFoundException(e.getMessage());
-            } else if (e.status() == 500) {
-                throw new StatsServerUnavailable(e.getMessage(), e);
-            } else {
-                throw e;
-            }
-        }
+        return result;
+
     }
 
     @Override
@@ -582,17 +506,9 @@ public class EventServiceImpl implements EventService {
     public EventFullDto findEventById(Long eventId) {
         Event event = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException("Событие не найдено"));
 
-        try {
-            UserDto user = userClient.findById(event.getInitiatorId());
+        UserDto user = userClient.findById(event.getInitiatorId());
 
-            return EventMapper.mapToFullDto(event, 0L, user);
-        } catch (FeignException e) {
-            if (e.status() == 404) {
-                throw new NotFoundException(e.getMessage());
-            } else {
-                throw e;
-            }
-        }
+        return EventMapper.mapToFullDto(event, 0L, user);
     }
 
     @Transactional

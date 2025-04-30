@@ -19,8 +19,8 @@ InternalEventController, InternalRequestController и InternalCommentController
 #### EventService:
 1. Найти событие по id: GET /internal/events/{eventId}
 2. Обновить число одобренных заявок на участие: PUT /internal/events/{eventId}
-3. Проверить, что событие существует: GET GET /internal/events
-4. Удалить все события, которые инициировал пользователь: DELETE GET /internal/events
+3. Проверить, что событие существует: GET /internal/events
+4. Удалить все события, которые инициировал пользователь: DELETE /internal/events
 
 #### RequestService:
 1. Выгрузить все подтвержденные заявки для списка событий: GET  /internal/requests/prepare-confirmed-requests

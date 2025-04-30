@@ -25,10 +25,4 @@ public class User {
     String email;
 
     String name;
-
-   /* @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "ban_comments",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "event_id"))
-    Set<Event> forbiddenCommentEvents;*/
 }

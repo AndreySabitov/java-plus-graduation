@@ -1,18 +1,24 @@
 package ru.practicum.ewm.deserializer;
 
+import org.apache.avro.Schema;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.common.serialization.Deserializer;
-import ru.practicum.ewm.stats.avro.UserActionAvro;
 
-public class AvroDeserializer implements Deserializer<UserActionAvro> {
-    private final DecoderFactory decoderFactory = DecoderFactory.get();
-    private final DatumReader<UserActionAvro> reader = new SpecificDatumReader<>(UserActionAvro.class);
+public abstract class BaseAvroDeserializer<T extends SpecificRecordBase> implements Deserializer<T> {
+    private final DecoderFactory decoderFactory;
+    private final DatumReader<T> reader;
+
+    public BaseAvroDeserializer(Schema schema) {
+        this.decoderFactory = DecoderFactory.get();
+        this.reader = new SpecificDatumReader<>(schema);
+    }
 
     @Override
-    public UserActionAvro deserialize(String topic, byte[] data) {
+    public T deserialize(String topic, byte[] data) {
         try {
             if (data != null) {
                 BinaryDecoder decoder = decoderFactory.binaryDecoder(data, null);

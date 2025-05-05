@@ -1,0 +1,16 @@
+kafka:
+  bootstrap-servers: localhost:9092
+  properties:
+    consumer:
+      user-action-client-id: userAction
+      user-action-group-id: userActionGroup
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      user-action-deserializer: ru.practicum.ewm.deserializer.UserActionAvroDeserializer
+      enable-auto-commit: false
+      poll-timeout: 1000
+      similarity-client-id: similarityClient
+      similarity-group-id: similarityGroup
+      event-similarity-deserializer: ru.practicum.ewm.deserializer.EventSimilarityAvroDeserializer
+  topics:
+    user-action: stats.user-actions.v1
+    events-similarity: stats.events-similarity.v1

@@ -9,6 +9,7 @@ import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.practicum.ewm.handler.UserActionHandler;
+import ru.practicum.ewm.producer.KafkaEventSimilarityProducer;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 
@@ -25,6 +26,9 @@ public class AggregatorService {
     @Value("${kafka.properties.consumer.poll-timeout}")
     private int pollTimeout;
     private final UserActionHandler handler;
+    private final KafkaEventSimilarityProducer producer;
+    @Value("${kafka.topics.events-similarity}")
+    private String similarityTopic;
 
     public void start() {
         try {
@@ -41,6 +45,8 @@ public class AggregatorService {
                     // обработка действий пользователей с событиями
                     List<EventSimilarityAvro> result = handler.calcSimilarity(action);
                     log.info("Получили список схожести {}", result);
+                    result.forEach(s -> producer.send(s, String.valueOf(s.getEventA()),
+                            s.getTimestamp(), similarityTopic));
                 }
                 consumer.commitSync();
             }
@@ -49,13 +55,10 @@ public class AggregatorService {
             log.error("Ошибка во время обработки событий от пользователей", e);
         } finally {
             try {
-                //   producer.flush();
                 consumer.commitSync();
             } finally {
                 log.info("Закрываем консьюмер");
                 consumer.close();
-                log.info("Закрываем продюсер");
-                //  producer.close(Duration.ofSeconds(10));
             }
         }
     }

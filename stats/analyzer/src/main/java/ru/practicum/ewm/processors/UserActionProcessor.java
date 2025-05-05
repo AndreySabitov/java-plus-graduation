@@ -8,6 +8,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import ru.practicum.ewm.mapper.UserActionMapper;
+import ru.practicum.ewm.repository.UserActionRepository;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 
 import java.time.Duration;
@@ -18,6 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserActionProcessor implements Runnable {
     private final Consumer<String, UserActionAvro> consumer;
+    private final UserActionRepository repository;
     @Value("${kafka.topics.user-action}")
     private String topic;
     @Value("${kafka.properties.consumer.poll-timeout}")
@@ -36,7 +39,9 @@ public class UserActionProcessor implements Runnable {
             for (ConsumerRecord<String, UserActionAvro> record : records) {
                 UserActionAvro action = record.value();
                 log.info("Получили действие пользователя {}", action);
-                // обработка действий пользователей
+
+                repository.save(UserActionMapper.mapToUserAction(action));
+                log.info("Успешно сохранили в БД информацию о действии {}", action);
             }
 
             consumer.commitSync();

@@ -8,6 +8,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import ru.practicum.ewm.handler.UserActionHandler;
+import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 
 import java.time.Duration;
@@ -22,6 +24,7 @@ public class AggregatorService {
     private String topic;
     @Value("${kafka.properties.consumer.poll-timeout}")
     private int pollTimeout;
+    private final UserActionHandler handler;
 
     public void start() {
         try {
@@ -36,12 +39,14 @@ public class AggregatorService {
                     UserActionAvro action = record.value();
                     log.info("обрабатываем действие пользователя {}", action);
                     // обработка действий пользователей с событиями
+                    List<EventSimilarityAvro> result = handler.calcSimilarity(action);
+                    log.info("Получили список схожести {}", result);
                 }
                 consumer.commitSync();
             }
         } catch (WakeupException ignored) {
         } catch (Exception e) {
-            log.error("Ошибка во время обработки событий от датчиков", e);
+            log.error("Ошибка во время обработки событий от пользователей", e);
         } finally {
             try {
                 //   producer.flush();

@@ -14,3 +14,22 @@ kafka:
   topics:
     user-action: stats.user-actions.v1
     events-similarity: stats.events-similarity.v1
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: true
+    show_sql: true
+
+  sql:
+    init:
+      mode: always
+
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5444/analyzer-db
+    username: analyzer
+    password: analyzer

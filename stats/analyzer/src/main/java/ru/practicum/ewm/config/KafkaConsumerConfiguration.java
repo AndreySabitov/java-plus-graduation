@@ -46,7 +46,7 @@ public class KafkaConsumerConfiguration {
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
                 env.getProperty("kafka.properties.consumer.event-similarity-deserializer"));
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,
-                env.getProperty("spring.kafka.consumer.enable-auto-commit"));
+                env.getProperty("kafka.properties.consumer.enable-auto-commit"));
 
         return new KafkaConsumer<>(config);
     }

@@ -44,6 +44,15 @@ services:
       - POSTGRES_PASSWORD=comment
       - POSTGRES_USER=comment
       - POSTGRES_DB=comment-db
+  analyzer-db:
+    image: postgres:16.1
+    container_name: postgres-analyzer-db
+    ports:
+      - "5444:5432"
+    environment:
+      - POSTGRES_PASSWORD=analyzer
+      - POSTGRES_USER=analyzer
+      - POSTGRES_DB=analyzer-db
 
   kafka:
     image: confluentinc/confluent-local:7.4.3

@@ -8,8 +8,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import ru.practicum.ewm.mapper.EventSimilarityMapper;
-import ru.practicum.ewm.repository.EventSimilarityRepository;
+import ru.practicum.ewm.handler.EventSimilarityHandler;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
 
 import java.time.Duration;
@@ -20,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EventSimilarityProcessor {
     private final Consumer<String, EventSimilarityAvro> consumer;
-    private final EventSimilarityRepository repository;
+    private final EventSimilarityHandler handler;
     @Value("${kafka.topics.events-similarity}")
     private String topic;
     @Value("${kafka.properties.consumer.poll-timeout}")
@@ -38,8 +37,7 @@ public class EventSimilarityProcessor {
                     EventSimilarityAvro eventSimilarity = record.value();
                     log.info("Получили коэффициент схожести: {}", eventSimilarity);
 
-                    repository.save(EventSimilarityMapper.mapToEventSimilarity(eventSimilarity));
-                    log.info("Успешно сохранили event similarity {}", eventSimilarity);
+                    handler.handle(eventSimilarity);
                 }
 
                 consumer.commitSync();

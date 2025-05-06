@@ -1,6 +1,6 @@
 grpc:
   server:
-    port: 9092
+    port: 9091
 
 kafka:
   bootstrap-servers: localhost:9092

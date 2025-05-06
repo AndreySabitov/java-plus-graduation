@@ -1,9 +1,7 @@
 package ru.practicum.ewm.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 
@@ -12,6 +10,8 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Getter
+@Setter
 public class EventSimilarity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

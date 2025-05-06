@@ -8,8 +8,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import ru.practicum.ewm.mapper.UserActionMapper;
-import ru.practicum.ewm.repository.UserActionRepository;
+import ru.practicum.ewm.handler.UserActionHandler;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 
 import java.time.Duration;
@@ -20,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserActionProcessor implements Runnable {
     private final Consumer<String, UserActionAvro> consumer;
-    private final UserActionRepository repository;
+    private final UserActionHandler handler;
     @Value("${kafka.topics.user-action}")
     private String topic;
     @Value("${kafka.properties.consumer.poll-timeout}")
@@ -29,32 +28,31 @@ public class UserActionProcessor implements Runnable {
     @Override
     public void run() {
         try {
-        consumer.subscribe(List.of(topic));
+            consumer.subscribe(List.of(topic));
 
-        Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
+            Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
 
-        while(true) {
-            ConsumerRecords<String, UserActionAvro> records = consumer.poll(Duration.ofMillis(pollTimeout));
+            while (true) {
+                ConsumerRecords<String, UserActionAvro> records = consumer.poll(Duration.ofMillis(pollTimeout));
 
-            for (ConsumerRecord<String, UserActionAvro> record : records) {
-                UserActionAvro action = record.value();
-                log.info("Получили действие пользователя {}", action);
+                for (ConsumerRecord<String, UserActionAvro> record : records) {
+                    UserActionAvro action = record.value();
+                    log.info("Получили действие пользователя {}", action);
 
-                repository.save(UserActionMapper.mapToUserAction(action));
-                log.info("Успешно сохранили в БД информацию о действии {}", action);
+                    handler.handle(action);
+                }
+
+                consumer.commitSync();
             }
-
-            consumer.commitSync();
-        }
-    } catch (WakeupException ignored) {
-    } catch (Exception e) {
-        log.error("Ошибка чтения данных из топика {}", topic);
-    } finally {
-        try {
-            consumer.commitSync();
+        } catch (WakeupException ignored) {
+        } catch (Exception e) {
+            log.error("Ошибка чтения данных из топика {}", topic);
         } finally {
-            consumer.close();
-        }
+            try {
+                consumer.commitSync();
+            } finally {
+                consumer.close();
+            }
         }
     }
 }

@@ -17,6 +17,7 @@
         <module>serialization</module>
         <module>aggregator</module>
         <module>analyzer</module>
+        <module>stats-client</module>
     </modules>
 
 </project>

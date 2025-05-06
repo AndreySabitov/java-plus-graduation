@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.ewm.grpc.stats.event.InteractionsCountRequestProto;
 import ru.practicum.ewm.grpc.stats.event.RecommendedEventProto;
 import ru.practicum.ewm.grpc.stats.event.SimilarEventsRequestProto;
 import ru.practicum.ewm.grpc.stats.event.UserPredictionsRequestProto;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class RecommendationsHandler {
     private final UserActionRepository userActionRepository;
     private final EventSimilarityRepository eventSimilarityRepository;
@@ -39,14 +42,14 @@ public class RecommendationsHandler {
                 .map(UserAction::getEventId)
                 .collect(Collectors.toSet()), Sort.by(Sort.Direction.DESC, "score"));
 
-        List<Long> newEventIdsA = eventSimilarities.stream()// мероприятия с которыми пользователь ещё не взаимодействовал
+        List<Long> newEventIdsA = eventSimilarities.stream()
                 .map(EventSimilarity::getEventB)
                 .filter(eventId -> !userActionRepository.existsByEventIdAndUserId(eventId, userId))
                 .distinct()
                 .limit(request.getMaxResults())
                 .toList();
 
-        List<Long> newEventIdsB = eventSimilaritiesB.stream()// мероприятия с которыми пользователь ещё не взаимодействовал
+        List<Long> newEventIdsB = eventSimilaritiesB.stream()
                 .map(EventSimilarity::getEventA)
                 .filter(eventId -> !userActionRepository.existsByEventIdAndUserId(eventId, userId))
                 .distinct()
@@ -95,6 +98,15 @@ public class RecommendationsHandler {
         return recommendations.stream()
                 .sorted(Comparator.comparing(RecommendedEventProto::getScore).reversed())
                 .toList();
+    }
+
+    public List<RecommendedEventProto> getInteractionsCount(InteractionsCountRequestProto request) {
+        return new ArrayList<>(request.getEventIdList().stream()
+                .map(eId -> RecommendedEventProto.newBuilder()
+                        .setEventId(eId)
+                        .setScore(userActionRepository.getSumWeightByEventId(eId))
+                        .build())
+                .toList());
     }
 
     private float calcScore(Long eventId, Long userId) {

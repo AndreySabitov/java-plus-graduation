@@ -1,17 +1,19 @@
-kafka:
-  bootstrap-servers: localhost:9092
-  properties:
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: ru.practicum.ewm.serializer.AvroSerializer
+spring:
+  application:
+    name: aggregator
+  config:
+    import: "configserver:"
+  cloud:
+    config:
+      discovery:
+        enabled: true
+        serviceId: config-server
+      fail-fast: true
+      retry:
+        useRandomPolicy: true
+        max-interval: 6000
 
-    consumer:
-      client-id: UserActionConsumer
-      group-id: userAction.group.id
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: ru.practicum.ewm.deserializer.UserActionAvroDeserializer
-      enable-auto-commit: false
-      poll-timeout: 1000
-  topics:
-    user-action: stats.user-actions.v1
-    events-similarity: stats.events-similarity.v1
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/

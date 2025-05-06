@@ -19,8 +19,8 @@ import java.util.stream.StreamSupport;
 public class RecommendationsClient {
     private final RecommendationsControllerGrpc.RecommendationsControllerBlockingStub recommendationsStub;
 
-    public RecommendationsClient(@GrpcClient("analyzer")
-                                 RecommendationsControllerGrpc.RecommendationsControllerBlockingStub recommendationsStub) {
+    public RecommendationsClient(
+            @GrpcClient("analyzer") RecommendationsControllerGrpc.RecommendationsControllerBlockingStub recommendationsStub) {
         this.recommendationsStub = recommendationsStub;
     }
 

@@ -1,7 +1,6 @@
 package ru.practicum.ewm;
 
 import com.google.protobuf.Timestamp;
-import com.google.protobuf.TimestampProto;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.grpc.stats.controller.UserActionControllerGrpc;
@@ -14,8 +13,8 @@ import java.time.Instant;
 public class UserActionClient {
     private final UserActionControllerGrpc.UserActionControllerBlockingStub userActionStub;
 
-    public UserActionClient(@GrpcClient("collector")
-                            UserActionControllerGrpc.UserActionControllerBlockingStub userActionStub) {
+    public UserActionClient(
+            @GrpcClient("collector") UserActionControllerGrpc.UserActionControllerBlockingStub userActionStub) {
         this.userActionStub = userActionStub;
     }
 
@@ -27,7 +26,7 @@ public class UserActionClient {
                 .setTimestamp(mapToTimestamp(instant))
                 .build();
 
-       userActionStub.collectUserAction(request);
+        userActionStub.collectUserAction(request);
     }
 
     private Timestamp mapToTimestamp(Instant instant) {

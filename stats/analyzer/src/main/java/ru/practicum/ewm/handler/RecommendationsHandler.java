@@ -5,16 +5,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import ru.practicum.ewm.grpc.stats.event.RecommendedEventProto;
+import ru.practicum.ewm.grpc.stats.event.SimilarEventsRequestProto;
 import ru.practicum.ewm.grpc.stats.event.UserPredictionsRequestProto;
 import ru.practicum.ewm.model.EventSimilarity;
 import ru.practicum.ewm.model.UserAction;
 import ru.practicum.ewm.repository.EventSimilarityRepository;
 import ru.practicum.ewm.repository.UserActionRepository;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -64,6 +62,38 @@ public class RecommendationsHandler {
                         .setEventId(eId)
                         .setScore(calcScore(eId, userId))
                         .build())
+                .toList();
+    }
+
+    public List<RecommendedEventProto> getSimilarEvents(SimilarEventsRequestProto request) {
+        Long eventId = request.getEventId();
+        Long userId = request.getUserId();
+
+        List<EventSimilarity> eventSimilaritiesA = eventSimilarityRepository.findAllByEventA(eventId,
+                Sort.by(Sort.Direction.DESC, "score"));
+        List<EventSimilarity> eventSimilaritiesB = eventSimilarityRepository.findAllByEventB(eventId,
+                Sort.by(Sort.Direction.DESC, "score"));
+
+        List<RecommendedEventProto> recommendations = new ArrayList<>(eventSimilaritiesA.stream()
+                .filter(es -> !userActionRepository.existsByEventIdAndUserId(es.getEventB(), userId))
+                .map(es -> RecommendedEventProto.newBuilder()
+                        .setEventId(es.getEventB())
+                        .setScore(es.getScore())
+                        .build())
+                .toList());
+
+        List<RecommendedEventProto> recommendationsB = eventSimilaritiesB.stream()
+                .filter(es -> !userActionRepository.existsByEventIdAndUserId(es.getEventA(), userId))
+                .map(es -> RecommendedEventProto.newBuilder()
+                        .setEventId(es.getEventA())
+                        .setScore(es.getScore())
+                        .build())
+                .toList();
+
+        recommendations.addAll(recommendationsB);
+
+        return recommendations.stream()
+                .sorted(Comparator.comparing(RecommendedEventProto::getScore).reversed())
                 .toList();
     }
 

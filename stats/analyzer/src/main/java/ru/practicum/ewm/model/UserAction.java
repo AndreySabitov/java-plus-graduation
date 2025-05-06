@@ -2,7 +2,6 @@ package ru.practicum.ewm.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import ru.practicum.ewm.stats.avro.ActionTypeAvro;
 
 import java.time.Instant;
 

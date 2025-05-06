@@ -35,8 +35,12 @@ public class EventRecommendationsController extends RecommendationsControllerGrp
                                  StreamObserver<RecommendedEventProto> responseObserver) {
         log.info("Получили запрос на получение похожих событий {}", request);
 
-        responseObserver.onNext(RecommendedEventProto.getDefaultInstance());
-        responseObserver.onCompleted();
+        try {
+            handler.getSimilarEvents(request).forEach(responseObserver::onNext);
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(e);
+        }
     }
 
     @Override

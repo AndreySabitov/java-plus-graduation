@@ -18,7 +18,7 @@ public class KafkaConsumerConfiguration {
     private final Environment env;
 
     @Bean
-    public Consumer<String, UserActionAvro>  userActionConsumer() {
+    public Consumer<Long, UserActionAvro>  userActionConsumer() {
         Properties config = new Properties();
 
         config.put(ConsumerConfig.CLIENT_ID_CONFIG, env.getProperty("kafka.properties.consumer.user-action-client-id"));
@@ -35,7 +35,7 @@ public class KafkaConsumerConfiguration {
     }
 
     @Bean
-    public Consumer<String, EventSimilarityAvro> eventSimilarityConsumer() {
+    public Consumer<Long, EventSimilarityAvro> eventSimilarityConsumer() {
         Properties config = new Properties();
 
         config.put(ConsumerConfig.CLIENT_ID_CONFIG, env.getProperty("kafka.properties.consumer.similarity-client-id"));

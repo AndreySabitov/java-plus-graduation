@@ -5,6 +5,7 @@ import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.LongSerializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -17,7 +18,7 @@ public class KafkaProducerConfiguration {
     private final Environment env;
 
     @Bean
-    public Producer<String, SpecificRecordBase> getProducer() {
+    public Producer<Long, SpecificRecordBase> getProducer() {
         Properties config = new Properties();
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
                 env.getProperty("kafka.producer.properties.bootstrap-servers"));

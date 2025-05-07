@@ -8,7 +8,7 @@ kafka:
     consumer:
       user-action-client-id: userAction
       user-action-group-id: userActionGroup
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      key-deserializer: org.apache.kafka.common.serialization.LongDeserializer
       user-action-deserializer: ru.practicum.ewm.deserializer.UserActionAvroDeserializer
       enable-auto-commit: false
       poll-timeout: 1000

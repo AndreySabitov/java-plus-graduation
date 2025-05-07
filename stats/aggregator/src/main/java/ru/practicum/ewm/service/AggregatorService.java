@@ -20,7 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class AggregatorService {
-    private final Consumer<String, UserActionAvro> consumer;
+    private final Consumer<Long, UserActionAvro> consumer;
     @Value("${kafka.topics.user-action}")
     private String topic;
     @Value("${kafka.properties.consumer.poll-timeout}")
@@ -37,16 +37,16 @@ public class AggregatorService {
             Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
 
             while (true) {
-                ConsumerRecords<String, UserActionAvro> records = consumer.poll(Duration.ofMillis(pollTimeout));
+                ConsumerRecords<Long, UserActionAvro> records = consumer.poll(Duration.ofMillis(pollTimeout));
 
-                for (ConsumerRecord<String, UserActionAvro> record : records) {
+                for (ConsumerRecord<Long, UserActionAvro> record : records) {
                     UserActionAvro action = record.value();
                     log.info("обрабатываем действие пользователя {}", action);
 
                     List<EventSimilarityAvro> result = handler.calcSimilarity(action);
                     log.info("Получили список коэффициентов схожести {}", result);
-                    result.forEach(es -> producer.send(es, String.valueOf(es.getEventA()),
-                            es.getTimestamp(), similarityTopic));
+                    result.forEach(es -> producer.send(es, es.getEventA(), es.getTimestamp(),
+                            similarityTopic));
                 }
                 consumer.commitSync();
             }

@@ -12,10 +12,10 @@ import java.time.Instant;
 @Component
 @RequiredArgsConstructor
 public class KafkaEventSimilarityProducer implements AutoCloseable {
-    private final Producer<String, SpecificRecordBase> producer;
+    private final Producer<Long, SpecificRecordBase> producer;
 
-    public void send(SpecificRecordBase message, String eventId, Instant timestamp, String topic) {
-        ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(topic, null,
+    public void send(SpecificRecordBase message, Long eventId, Instant timestamp, String topic) {
+        ProducerRecord<Long, SpecificRecordBase> record = new ProducerRecord<>(topic, null,
                 timestamp.toEpochMilli(), eventId, message);
 
         producer.send(record);

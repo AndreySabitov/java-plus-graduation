@@ -2,13 +2,13 @@ kafka:
   bootstrap-servers: localhost:9092
   properties:
     producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      key-serializer: org.apache.kafka.common.serialization.LongSerializer
       value-serializer: ru.practicum.ewm.serializer.AvroSerializer
 
     consumer:
       client-id: UserActionConsumer
       group-id: userAction.group.id
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      key-deserializer: org.apache.kafka.common.serialization.LongDeserializer
       value-deserializer: ru.practicum.ewm.deserializer.UserActionAvroDeserializer
       enable-auto-commit: false
       poll-timeout: 1000

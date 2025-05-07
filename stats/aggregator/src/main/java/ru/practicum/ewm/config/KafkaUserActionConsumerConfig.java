@@ -17,7 +17,7 @@ public class KafkaUserActionConsumerConfig {
     private final Environment env;
 
     @Bean
-    public Consumer<String, UserActionAvro> kafkaConsumer() {
+    public Consumer<Long, UserActionAvro> kafkaConsumer() {
         Properties config = new Properties();
 
         config.put(ConsumerConfig.CLIENT_ID_CONFIG, env.getProperty("kafka.properties.consumer.client-id"));

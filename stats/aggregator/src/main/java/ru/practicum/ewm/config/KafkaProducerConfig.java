@@ -17,7 +17,7 @@ public class KafkaProducerConfig {
     private final Environment env;
 
     @Bean
-    public Producer<String, SpecificRecordBase> kafkaProducer() {
+    public Producer<Long, SpecificRecordBase> kafkaProducer() {
         Properties config = new Properties();
 
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, env.getProperty("kafka.bootstrap-servers"));

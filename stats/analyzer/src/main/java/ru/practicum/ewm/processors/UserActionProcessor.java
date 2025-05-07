@@ -18,7 +18,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class UserActionProcessor implements Runnable {
-    private final Consumer<String, UserActionAvro> consumer;
+    private final Consumer<Long, UserActionAvro> consumer;
     private final UserActionHandler handler;
     @Value("${kafka.topics.user-action}")
     private String topic;
@@ -33,9 +33,9 @@ public class UserActionProcessor implements Runnable {
             Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
 
             while (true) {
-                ConsumerRecords<String, UserActionAvro> records = consumer.poll(Duration.ofMillis(pollTimeout));
+                ConsumerRecords<Long, UserActionAvro> records = consumer.poll(Duration.ofMillis(pollTimeout));
 
-                for (ConsumerRecord<String, UserActionAvro> record : records) {
+                for (ConsumerRecord<Long, UserActionAvro> record : records) {
                     UserActionAvro action = record.value();
                     log.info("Получили действие пользователя {}", action);
 

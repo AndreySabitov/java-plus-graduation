@@ -18,7 +18,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class EventSimilarityProcessor {
-    private final Consumer<String, EventSimilarityAvro> consumer;
+    private final Consumer<Long, EventSimilarityAvro> consumer;
     private final EventSimilarityHandler handler;
     @Value("${kafka.topics.events-similarity}")
     private String topic;
@@ -31,9 +31,9 @@ public class EventSimilarityProcessor {
             Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
 
             while (true) {
-                ConsumerRecords<String, EventSimilarityAvro> records = consumer.poll(Duration.ofMillis(pollTimeout));
+                ConsumerRecords<Long, EventSimilarityAvro> records = consumer.poll(Duration.ofMillis(pollTimeout));
 
-                for (ConsumerRecord<String, EventSimilarityAvro> record : records) {
+                for (ConsumerRecord<Long, EventSimilarityAvro> record : records) {
                     EventSimilarityAvro eventSimilarity = record.value();
                     log.info("Получили коэффициент схожести: {}", eventSimilarity);
 

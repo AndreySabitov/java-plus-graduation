@@ -2,6 +2,7 @@ package ru.practicum.ewm.handler;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import ru.practicum.ewm.stats.avro.ActionTypeAvro;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 
@@ -14,37 +15,39 @@ import java.util.stream.Collectors;
 public class UserActionHandler {
     private final Map<Long, Map<Long, Float>> eventActions = new HashMap<>(); // хранит действия всех пользователей с событиями (ключ)
     private final Map<Long, Float> eventWeights = new HashMap<>(); // хранит общий вес для конкретного события
-    private final Map<Long, Map<Long, Float>> eventSumOfMin = new HashMap<>(); // значения числителя
+    private final Map<Long, Map<Long, Float>> minWeightsSum = new HashMap<>(); // значения числителя
 
     public List<EventSimilarityAvro> calcSimilarity(UserActionAvro action) {
         List<EventSimilarityAvro> similarity = new ArrayList<>();
-        Set<Long> anotherEvents = eventActions.keySet().stream()
-                .filter(id -> id != action.getEventId())
+        Long actionEventId = action.getEventId();
+        Long actionUserId = action.getUserId();
+
+        Float delta = updateEventAction(action);
+
+        if (delta > 0) {
+            if (!eventWeights.containsKey(actionEventId)) {
+                eventWeights.put(actionEventId, delta);
+            } else {
+                eventWeights.compute(actionEventId, (k, oldWeight) -> oldWeight + delta);
+            }
+        }
+
+        Set<Long> anotherEvents = eventActions.keySet().stream() // получили события с которыми были действия
+                .filter(id -> !Objects.equals(id, actionEventId))
                 .collect(Collectors.toSet());
 
         log.info("получаем коэффициенты схожести для событий {}", anotherEvents);
 
-        Float delta = updateUserActionWeight(action);
-        log.info("eventActions после обновления {}", eventActions);
-        log.info("delta = {}", delta);
-        if (delta > 0) {
-            calcSumOfWeights(action.getEventId(), delta);
-            log.info("map весов для всех событий {}", eventWeights);
-            anotherEvents.forEach(eb ->
-                    calcSumOfMinWeightsOfEvents(action.getEventId(), eb));
-            log.info("eventSumOfMin {}", eventSumOfMin);
-        }
+        anotherEvents.forEach(ae -> {
+            // расчёт схожести для actionEvent и ae
+            //добавляем EventSimilarityAvro в список
+            float sim = (float) (getMinWeightsSum(actionEventId, ae, delta, actionUserId) /
+                    (Math.sqrt(eventWeights.get(actionEventId)) * Math.sqrt(eventWeights.get(ae))));
 
-        anotherEvents.forEach(eb -> {
-            float result = (float) (eventSumOfMin.get(action.getEventId()).get(eb) /
-                    (Math.sqrt(eventWeights.get(action.getEventId())) * Math.sqrt(eventWeights.get(eb))));
-
-            long min = Math.min(action.getEventId(), eb);
-            long max = Math.max(action.getEventId(), eb);
             similarity.add(EventSimilarityAvro.newBuilder()
-                    .setEventA(min)
-                    .setEventB(max)
-                    .setScore(result)
+                    .setEventA(Math.min(actionEventId, ae))
+                    .setEventB(Math.max(actionEventId, ae))
+                    .setScore(sim)
                     .setTimestamp(Instant.now())
                     .build());
         });
@@ -52,65 +55,95 @@ public class UserActionHandler {
         return similarity;
     }
 
-    private Float updateUserActionWeight(UserActionAvro action) {
-        Map<Long, Float> actionWeight;
-        Float score = switch (action.getActionType()) {
-            case LIKE -> 1.0f;
-            case REGISTER -> 0.8f;
-            case VIEW -> 0.4f;
-        };
+    private Float updateEventAction(UserActionAvro action) {
+        Long eventId = action.getEventId();
+        Long userId = action.getUserId();
+        Float newWeight = mapActionToWeight(action.getActionType());
 
-        if (!eventActions.containsKey(action.getEventId())) {
-            actionWeight = new HashMap<>();
-            actionWeight.put(action.getUserId(), score);
-            eventActions.put(action.getEventId(), actionWeight);
-            return score;
+        if (!eventActions.containsKey(eventId)) {
+            Map<Long, Float> userActionsWeight = new HashMap<>();
+            userActionsWeight.put(userId, newWeight);
+            eventActions.put(eventId, userActionsWeight);
+            return newWeight;
         } else {
-            actionWeight = eventActions.get(action.getEventId());
-
-            if (!actionWeight.containsKey(action.getUserId())) {
-                actionWeight.put(action.getUserId(), score);
-                eventActions.put(action.getEventId(), actionWeight);
-                return score;
+            Map<Long, Float> userActionsWeight = eventActions.get(eventId);
+            if (!userActionsWeight.containsKey(userId)) {
+                userActionsWeight.put(userId, newWeight);
+                eventActions.put(eventId, userActionsWeight);
+                return newWeight;
+            } else {
+                Float oldWeight = userActionsWeight.get(userId);
+                if (newWeight > oldWeight) {
+                    userActionsWeight.put(userId, newWeight);
+                    eventActions.put(eventId, userActionsWeight);
+                    return newWeight - oldWeight;
+                }
+                return 0f;
             }
-            if (score > actionWeight.get(action.getUserId())) {
-                Float delta = score - actionWeight.get(action.getUserId());
-                actionWeight.put(action.getUserId(), score);
-                eventActions.put(action.getEventId(), actionWeight);
-                return delta;
-            }
-            return 0f;
         }
     }
 
-    private void calcSumOfWeights(Long eventId, Float delta) {
-        if (!eventWeights.containsKey(eventId)) {
-            eventWeights.put(eventId, delta);
+    private Float getMinWeightsSum(Long eventA, Long eventB, Float delta, Long userId) {
+        if (!minWeightsSum.containsKey(eventA)) {
+            Float weight = calcMinWeightsSum(eventA, eventB);
+            Map<Long, Float> map = new HashMap<>();
+            map.put(eventB, weight);
+            minWeightsSum.put(eventA, map);
+            return weight;
         } else {
-            eventWeights.compute(eventId, (k, oldSum) -> oldSum + delta);
+            Map<Long, Float> innerMap = minWeightsSum.get(eventA);
+            if (!innerMap.containsKey(eventB)) {
+                Float weight = calcMinWeightsSum(eventA, eventB);
+                innerMap.put(eventB, weight);
+                minWeightsSum.put(eventA, innerMap);
+                return weight;
+            } else {
+                Float oldWeight = minWeightsSum.get(eventA).get(eventB);
+                if (delta == 0) {
+                    return oldWeight;
+                }
+                Float weightA = eventActions.get(eventA).get(userId);
+                Float weightB = eventActions.get(eventB).get(userId);
+                if (weightB == null) {
+                    return oldWeight;
+                }
+                float newWeight;
+                if (weightA > weightB && (weightA - delta) < weightB) {
+                    newWeight = oldWeight + (weightB - (weightA - delta));
+                } else {
+                    newWeight = oldWeight + weightA;
+                }
+                minWeightsSum.get(eventA).put(eventB, newWeight);
+                return newWeight;
+            }
         }
     }
 
-    private void calcSumOfMinWeightsOfEvents(Long eventA, Long eventB) {
+    private Float calcMinWeightsSum(Long eventA, Long eventB) {
         List<Float> weights = new ArrayList<>();
 
-        Map<Long, Float> eventAActions = eventActions.get(eventA);
-        Map<Long, Float> eventBActions = eventActions.get(eventB);
+        Map<Long, Float> userActionsA = eventActions.get(eventA);
+        Map<Long, Float> userActionsB = eventActions.get(eventB);
 
-        eventAActions.forEach((aUser, aWeight) -> {
-            if (eventBActions.containsKey(aUser)) {
-                weights.add(Math.min(aWeight, eventBActions.get(aUser)));
+        userActionsA.forEach((aUser, aWeight) -> {
+            if (userActionsB.containsKey(aUser)) {
+                weights.add(Math.min(aWeight, userActionsB.get(aUser)));
             }
         });
 
-        float result = weights.stream().collect(Collectors.summingDouble(Float::floatValue)).floatValue();
-
-        if (!eventSumOfMin.containsKey(eventA)) {
-            Map<Long, Float> map = new HashMap<>();
-            map.put(eventB, result);
-            eventSumOfMin.put(eventA, map);
-        } else {
-            eventSumOfMin.get(eventA).put(eventB, result);
+        if (weights.isEmpty()) {
+            return 0f;
         }
+        return weights.stream()
+                .collect(Collectors.summingDouble(Float::floatValue))
+                .floatValue();
+    }
+
+    private Float mapActionToWeight(ActionTypeAvro type) {
+        return switch (type) {
+            case VIEW -> 0.4f;
+            case REGISTER -> 0.8f;
+            case LIKE -> 1f;
+        };
     }
 }

@@ -42,11 +42,11 @@ public class AggregatorService {
                 for (ConsumerRecord<String, UserActionAvro> record : records) {
                     UserActionAvro action = record.value();
                     log.info("обрабатываем действие пользователя {}", action);
-                    // обработка действий пользователей с событиями
+
                     List<EventSimilarityAvro> result = handler.calcSimilarity(action);
-                    log.info("Получили список схожести {}", result);
-                    result.forEach(s -> producer.send(s, String.valueOf(s.getEventA()),
-                            s.getTimestamp(), similarityTopic));
+                    log.info("Получили список коэффициентов схожести {}", result);
+                    result.forEach(es -> producer.send(es, String.valueOf(es.getEventA()),
+                            es.getTimestamp(), similarityTopic));
                 }
                 consumer.commitSync();
             }

@@ -11,7 +11,7 @@ public class AggregatorStarter implements CommandLineRunner {
     private final AggregatorService service;
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         service.start();
     }
 }

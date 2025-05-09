@@ -120,11 +120,11 @@ public class RecommendationsHandler {
         List<EventSimilarity> eventSimilaritiesB = eventSimilarityRepository.findAllByEventB(eventId,
                 PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "score")));
 
-        Map<Long, Float> viewedEventScores = eventSimilaritiesA.stream()
+        Map<Long, Double> viewedEventScores = eventSimilaritiesA.stream()
                 .filter(es -> userActionRepository.existsByEventIdAndUserId(es.getEventB(), userId))
                 .collect(Collectors.toMap(EventSimilarity::getEventB, EventSimilarity::getScore));
 
-        Map<Long, Float> viewedEventScoresB = eventSimilaritiesB.stream()
+        Map<Long, Double> viewedEventScoresB = eventSimilaritiesB.stream()
                 .filter(es -> userActionRepository.existsByEventIdAndUserId(es.getEventA(), userId))
                 .collect(Collectors.toMap(EventSimilarity::getEventA, EventSimilarity::getScore));
 
@@ -136,10 +136,10 @@ public class RecommendationsHandler {
 
         Float sumWeightedMarks = ((Double) viewedEventScores.entrySet().stream()
                 .map(entry -> actionMarks.get(entry.getKey()) * entry.getValue())
-                .mapToDouble(Float::floatValue).sum())
+                .mapToDouble(Double::doubleValue).sum())
                 .floatValue();
 
-        Float sumScores = ((Double) viewedEventScores.values().stream().mapToDouble(Float::floatValue).sum())
+        Float sumScores = ((Double) viewedEventScores.values().stream().mapToDouble(Double::doubleValue).sum())
                 .floatValue();
 
         return sumWeightedMarks / sumScores;

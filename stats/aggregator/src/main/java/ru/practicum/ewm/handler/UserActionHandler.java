@@ -1,6 +1,7 @@
 package ru.practicum.ewm.handler;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.springframework.stereotype.Component;
 import ru.practicum.ewm.stats.avro.ActionTypeAvro;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
@@ -27,9 +28,9 @@ public class UserActionHandler {
         if (delta > 0) {
 
             eventWeights.merge(actionEventId, delta, Double::sum);
+            log.info("Новый вес для события с id = {} равен {}", actionEventId, eventWeights.get(actionEventId));
 
-
-            Set<Long> anotherEvents = eventActions.keySet().stream() // получили события с которыми были действия
+            Set<Long> anotherEvents = eventActions.keySet().stream()
                     .filter(id -> !Objects.equals(id, actionEventId))
                     .collect(Collectors.toSet());
 
@@ -39,11 +40,11 @@ public class UserActionHandler {
                 double sim = getMinWeightsSum(actionEventId, ae, delta, actionUserId) /
                         (Math.sqrt(eventWeights.get(actionEventId)) * Math.sqrt(eventWeights.get(ae)));
 
-                if (sim != 0.0) {
+                if (sim > 0.0) {
                     similarity.add(EventSimilarityAvro.newBuilder()
                             .setEventA(Math.min(actionEventId, ae))
                             .setEventB(Math.max(actionEventId, ae))
-                            .setScore((float) sim)
+                            .setScore(sim)
                             .setTimestamp(Instant.now())
                             .build());
                 }
@@ -59,12 +60,17 @@ public class UserActionHandler {
         Double newWeight = Double.valueOf(mapActionToWeight(action.getActionType()));
 
         Map<Long, Double> userActions = eventActions.computeIfAbsent(eventId, k -> new HashMap<>());
+        log.info("Получили действия пользователей с событием {}: {}", eventId, userActions);
         Double oldWeight = userActions.get(userId);
 
         if (oldWeight == null || newWeight > oldWeight) {
             userActions.put(userId, newWeight);
-            return oldWeight == null ? newWeight : newWeight - oldWeight;
+            eventActions.put(eventId, userActions);
+            double delta = oldWeight == null ? newWeight : newWeight - oldWeight;
+            log.info("Возвращаем delta = {}", delta);
+            return delta;
         }
+        log.info("вес не изменился, возвращаем delta = 0.0");
         return 0.0;
     }
 
@@ -75,10 +81,12 @@ public class UserActionHandler {
         Map<Long, Double> innerMap = minWeightsSum.computeIfAbsent(first, k -> new HashMap<>());
 
         Double weight = innerMap.get(second);
+        log.info("Получили сумму минимальных весов для событий {} и {} равную {}", first, second, weight);
         if (weight == null) {
             weight = calcMinWeightsSum(eventA, eventB);
+            log.info("минимальная сумма не была посчитана ранее, поэтому посчитана новая сумма = {}", weight);
             innerMap.put(eventB, weight);
-
+            minWeightsSum.put(first, innerMap);
             return weight;
         }
 
@@ -86,18 +94,28 @@ public class UserActionHandler {
         Double weightB = eventActions.get(eventB).get(userId);
 
         if (weightB == null) {
-            return weight;
+            log.info("Пользователь {} не взаимодействовал с событием {} -> минимальный вес не изменился", userId, eventB);
+            return 0.0;
         }
 
+        log.info("weightA = {}", weightA);
+        log.info("weightB = {}", weightB);
         double newWeight;
         if (weightA > weightB && (weightA - delta) < weightB) {
             newWeight = weight + (weightB - (weightA - delta));
+            log.info("произошла смена минимального значения, минимальный вес увеличился на {}", newWeight);
+        } else if (weightA < weightB) {
+            log.info("после обновления weightA на delta он меньше чем eventB и общий вес увеличился на delta");
+            newWeight = weight + delta;
+        } else if (weightA.equals(weightB)) {
+            newWeight = weight + delta;
         } else {
-            newWeight = weight;
+            log.info("минимальное значение осталось тем же, обновление не требуется");
+            return  0.0;
         }
         minWeightsSum.get(first).put(second, newWeight);
+        log.info("мин сумма в мапе = {}", minWeightsSum.get(first).get(second));
         return newWeight;
-
     }
 
     private Double calcMinWeightsSum(Long eventA, Long eventB) {

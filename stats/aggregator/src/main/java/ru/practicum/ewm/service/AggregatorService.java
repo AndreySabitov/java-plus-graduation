@@ -14,6 +14,7 @@ import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 @Component
@@ -45,8 +46,7 @@ public class AggregatorService {
 
                     List<EventSimilarityAvro> result = handler.calcSimilarity(action);
                     log.info("Получили список коэффициентов схожести {}", result);
-                    result.forEach(es -> producer.send(es, es.getEventA(), es.getTimestamp(),
-                            similarityTopic));
+                    producer.send(result, similarityTopic);
                 }
                 consumer.commitSync();
             }

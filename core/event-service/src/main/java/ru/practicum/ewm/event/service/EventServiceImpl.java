@@ -474,7 +474,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> getEventsRecommendations(Long userId, int maxResults) {
-        Map<Long, Float> recommendations = recommendationsClient
+        Map<Long, Double> recommendations = recommendationsClient
                 .getRecommendationsForUser(userId, maxResults)
                 .collect(Collectors.toMap(RecommendedEventProto::getEventId, RecommendedEventProto::getScore));
 

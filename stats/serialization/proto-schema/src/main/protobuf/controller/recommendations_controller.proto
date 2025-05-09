@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+package stats.service.dashboard;
+
 import "messages/events_requests.proto";
 
 option java_package = "ru.practicum.ewm.grpc.stats.controller";

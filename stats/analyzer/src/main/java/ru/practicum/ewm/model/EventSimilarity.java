@@ -23,7 +23,7 @@ public class EventSimilarity {
     @Column(name = "event_b")
     private Long eventB;
 
-    private Float score;
+    private Double score;
 
     private Instant timestamp;
 }

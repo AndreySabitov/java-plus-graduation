@@ -13,10 +13,11 @@ import ru.practicum.ewm.stats.avro.UserActionAvro;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class UserActionHandler {
+public class UserActionAnalyzerHandlerImpl implements UserActionAnalyzerHandler {
     private final UserActionRepository repository;
 
     @Transactional
+    @Override
     public void handle(UserActionAvro action) {
         Long eventId = action.getEventId();
         Long userId = action.getUserId();

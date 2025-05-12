@@ -8,7 +8,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import ru.practicum.ewm.handler.UserActionHandler;
+import ru.practicum.ewm.handler.UserActionAnalyzerHandler;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 
 import java.time.Duration;
@@ -19,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserActionProcessor implements Runnable {
     private final Consumer<Long, UserActionAvro> consumer;
-    private final UserActionHandler handler;
+    private final UserActionAnalyzerHandler handler;
     @Value("${kafka.topics.user-action}")
     private String topic;
     @Value("${kafka.properties.consumer.poll-timeout}")

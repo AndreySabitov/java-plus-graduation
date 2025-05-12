@@ -1,14 +1,12 @@
 package ru.practicum.ewm.producer;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.stereotype.Component;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 
 @Component

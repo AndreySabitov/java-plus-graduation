@@ -14,7 +14,6 @@ import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 
 @Component

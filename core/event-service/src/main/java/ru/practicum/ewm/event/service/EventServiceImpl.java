@@ -487,7 +487,7 @@ public class EventServiceImpl implements EventService {
                 .collect(Collectors.toMap(UserDto::getId, Function.identity()));
 
         return events.stream()
-                .map(event -> EventMapper.mapToShortDto(event, Double.valueOf(recommendations.get(event.getId())),
+                .map(event -> EventMapper.mapToShortDto(event, recommendations.get(event.getId()),
                         initiators.get(event.getInitiatorId())))
                 .toList();
     }

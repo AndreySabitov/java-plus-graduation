@@ -1,7 +1,6 @@
 package ru.practicum.ewm.handler;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.specific.SpecificRecordBase;
 import org.springframework.stereotype.Component;
 import ru.practicum.ewm.stats.avro.ActionTypeAvro;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
@@ -78,6 +77,14 @@ public class UserActionHandler {
         Long first = Math.min(eventA, eventB);
         Long second = Math.max(eventA, eventB);
 
+        Double weightA = eventActions.get(eventA).get(userId);
+        Double weightB = eventActions.get(eventB).get(userId);
+
+        if (weightB == null) {
+            log.info("Пользователь {} не взаимодействовал с событием {} -> минимальный вес не изменился", userId, eventB);
+            return 0.0;
+        }
+
         Map<Long, Double> innerMap = minWeightsSum.computeIfAbsent(first, k -> new HashMap<>());
 
         Double weight = innerMap.get(second);
@@ -88,14 +95,6 @@ public class UserActionHandler {
             innerMap.put(eventB, weight);
             minWeightsSum.put(first, innerMap);
             return weight;
-        }
-
-        Double weightA = eventActions.get(eventA).get(userId);
-        Double weightB = eventActions.get(eventB).get(userId);
-
-        if (weightB == null) {
-            log.info("Пользователь {} не взаимодействовал с событием {} -> минимальный вес не изменился", userId, eventB);
-            return 0.0;
         }
 
         log.info("weightA = {}", weightA);
@@ -110,8 +109,8 @@ public class UserActionHandler {
         } else if (weightA.equals(weightB)) {
             newWeight = weight + delta;
         } else {
-            log.info("минимальное значение осталось тем же, обновление не требуется");
-            return  0.0;
+            log.info("минимальное значение осталось тем же");
+            return weight;
         }
         minWeightsSum.get(first).put(second, newWeight);
         log.info("мин сумма в мапе = {}", minWeightsSum.get(first).get(second));

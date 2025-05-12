@@ -9,7 +9,6 @@ import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.practicum.ewm.handler.UserActionHandler;
-import ru.practicum.ewm.handler.UserActionHandlerImpl;
 import ru.practicum.ewm.producer.KafkaEventSimilarityProducer;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;

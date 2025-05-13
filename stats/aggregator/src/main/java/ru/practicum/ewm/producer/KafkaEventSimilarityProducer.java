@@ -19,13 +19,14 @@ public class KafkaEventSimilarityProducer implements AutoCloseable {
                 .map(message -> new ProducerRecord<>(topic, null,
                         message.getTimestamp().toEpochMilli(), message.getEventA(), message))
                 .forEach(producer::send);
+    }
 
+    public void flush() {
         producer.flush();
     }
 
     @Override
     public void close() {
-        producer.flush();
         producer.close(Duration.ofSeconds(10));
     }
 }

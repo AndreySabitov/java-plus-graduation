@@ -42,7 +42,7 @@ public class UserActionProcessor implements Runnable {
                     handler.handle(action);
                 }
 
-                consumer.commitSync();
+                consumer.commitAsync();
             }
         } catch (WakeupException ignored) {
         } catch (Exception e) {

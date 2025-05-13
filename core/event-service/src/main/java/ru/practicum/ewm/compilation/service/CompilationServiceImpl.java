@@ -136,7 +136,7 @@ public class CompilationServiceImpl implements CompilationService {
 
         return events.stream().map(event ->
                         EventMapper.mapToShortDto(event, 0d, usersMap.getOrDefault(event.getInitiatorId(),
-                                UserDto.builder().id(0L).name("Unknown").build())))
+                                UserDto.builder().id(event.getInitiatorId()).name("UNKNOWN").build())))
                 .toList();
     }
 }

@@ -1,6 +1,7 @@
 package ru.practicum.ewm.handler;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.practicum.ewm.stats.avro.ActionTypeAvro;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
@@ -16,6 +17,12 @@ public class UserActionHandlerImpl implements UserActionHandler {
     private final Map<Long, Map<Long, Double>> eventActions = new HashMap<>();
     private final Map<Long, Double> eventWeights = new HashMap<>();
     private final Map<Long, Map<Long, Double>> minWeightsSum = new HashMap<>();
+    @Value("${application.action-weight.view}")
+    private float viewMark;
+    @Value("${application.action-weight.register}")
+    private float registerMark;
+    @Value("${application.action-weight.like}")
+    private float likeMark;
 
     public List<EventSimilarityAvro> calcSimilarity(UserActionAvro action) {
         List<EventSimilarityAvro> similarity = new ArrayList<>();
@@ -131,9 +138,9 @@ public class UserActionHandlerImpl implements UserActionHandler {
 
     private Float mapActionToWeight(ActionTypeAvro type) {
         return switch (type) {
-            case VIEW -> 0.4f;
-            case REGISTER -> 0.8f;
-            case LIKE -> 1f;
+            case VIEW -> viewMark;
+            case REGISTER -> registerMark;
+            case LIKE -> likeMark;
         };
     }
 }

@@ -46,18 +46,21 @@ public class AggregatorService {
                     List<EventSimilarityAvro> result = handler.calcSimilarity(action);
                     log.info("Получили список коэффициентов схожести {}", result);
                     producer.send(result, similarityTopic);
+                    producer.flush();
                 }
-                consumer.commitSync();
+                consumer.commitAsync();
             }
         } catch (WakeupException ignored) {
         } catch (Exception e) {
             log.error("Ошибка во время обработки событий от пользователей", e);
         } finally {
             try {
+                producer.flush();
                 consumer.commitSync();
             } finally {
                 log.info("Закрываем консьюмер");
                 consumer.close();
+                producer.close();
             }
         }
     }

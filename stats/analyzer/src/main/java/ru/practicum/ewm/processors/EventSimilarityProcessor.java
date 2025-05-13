@@ -40,7 +40,7 @@ public class EventSimilarityProcessor {
                     handler.handle(eventSimilarity);
                 }
 
-                consumer.commitSync();
+                consumer.commitAsync();
             }
         } catch (WakeupException ignored) {
         } catch (Exception e) {

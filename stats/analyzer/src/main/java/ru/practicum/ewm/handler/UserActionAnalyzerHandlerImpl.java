@@ -2,6 +2,7 @@ package ru.practicum.ewm.handler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.mapper.UserActionMapper;
@@ -15,6 +16,12 @@ import ru.practicum.ewm.stats.avro.UserActionAvro;
 @Transactional(readOnly = true)
 public class UserActionAnalyzerHandlerImpl implements UserActionAnalyzerHandler {
     private final UserActionRepository repository;
+    @Value("${application.action-weight.view}")
+    private float viewMark;
+    @Value("${application.action-weight.register}")
+    private float registerMark;
+    @Value("${application.action-weight.like}")
+    private float likeMark;
 
     @Transactional
     @Override
@@ -22,9 +29,9 @@ public class UserActionAnalyzerHandlerImpl implements UserActionAnalyzerHandler 
         Long eventId = action.getEventId();
         Long userId = action.getUserId();
         Float newActionMark = switch (action.getActionType()) {
-            case LIKE -> 1.0f;
-            case REGISTER -> 0.8f;
-            case VIEW -> 0.4f;
+            case LIKE -> likeMark;
+            case REGISTER -> registerMark;
+            case VIEW -> viewMark;
         };
 
         if (!repository.existsByEventIdAndUserId(eventId, userId)) {

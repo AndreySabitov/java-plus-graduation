@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.ewm.client.StatClient;
 import ru.practicum.ewm.client.UserClient;
 import ru.practicum.ewm.compilation.mapper.CompilationMapper;
 import ru.practicum.ewm.compilation.model.Compilation;
@@ -14,14 +13,12 @@ import ru.practicum.ewm.dto.comlication.CompilationDto;
 import ru.practicum.ewm.dto.comlication.NewCompilationDto;
 import ru.practicum.ewm.dto.comlication.UpdateCompilationRequest;
 import ru.practicum.ewm.dto.event.EventShortDto;
-import ru.practicum.ewm.dto.stats.StatsDto;
 import ru.practicum.ewm.dto.user.UserDto;
 import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.repository.EventRepository;
 import ru.practicum.ewm.exception.NotFoundException;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -33,7 +30,6 @@ import java.util.stream.Collectors;
 public class CompilationServiceImpl implements CompilationService {
     private final CompilationRepository compilationRepository;
     private final EventRepository eventRepository;
-    private final StatClient statClient;
     private final UserClient userClient;
 
     @Override
@@ -130,8 +126,6 @@ public class CompilationServiceImpl implements CompilationService {
         if (events.isEmpty()) {
             return Collections.emptyList();
         }
-        LocalDateTime minTime = events.stream().map(Event::getCreatedOn).min(Comparator.comparing(Function.identity())).get();
-        List<String> urisList = events.stream().map(event -> "/events/" + event.getId()).toList();
         List<Long> userIds = events.stream()
                 .map(Event::getInitiatorId)
                 .distinct()
@@ -140,22 +134,10 @@ public class CompilationServiceImpl implements CompilationService {
                 .getAllUsers(userIds, 0, userIds.size()).stream()
                 .collect(Collectors.toMap(UserDto::getId, Function.identity()));
 
-        List<StatsDto> statsList = statClient.getStats(minTime.minusSeconds(1), LocalDateTime.now(), urisList,
-                false);
-        return events.stream().map(event -> {
-                    Optional<StatsDto> result = statsList.stream()
-                            .filter(statsDto -> statsDto.getUri().equals("/events/" + event.getId()))
-                            .findFirst();
-                    if (result.isPresent()) {
-                        return EventMapper.mapToShortDto(event, result.get().getHits(),
-                                usersMap.getOrDefault(event.getInitiatorId(),
-                                        UserDto.builder().id(0L).name("Unknown").build()));
-                    } else {
-                        return EventMapper.mapToShortDto(event, 0L, usersMap.getOrDefault(event.getInitiatorId(),
-                                UserDto.builder().id(0L).name("Unknown").build()));
-                    }
-                })
-                .collect(Collectors.toList());
+        return events.stream().map(event ->
+                        EventMapper.mapToShortDto(event, 0d, usersMap.getOrDefault(event.getInitiatorId(),
+                                UserDto.builder().id(event.getInitiatorId()).name("UNKNOWN").build())))
+                .toList();
     }
 }
 

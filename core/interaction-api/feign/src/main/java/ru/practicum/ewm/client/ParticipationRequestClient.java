@@ -5,6 +5,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.dto.partrequest.ParticipationRequestDto;
+import ru.practicum.ewm.dto.partrequest.enums.Status;
 import ru.practicum.ewm.exception.ServerUnavailable;
 
 import java.util.ArrayList;
@@ -34,6 +35,10 @@ public interface ParticipationRequestClient {
 
     @DeleteMapping
     void deleteRequestsOfUser(@RequestParam Long userId) throws FeignException;
+
+    @GetMapping("/{eventId}/{userId}/check-user-confirmed")
+    boolean checkExistsByEventIdAndRequesterIdAndStatus(@PathVariable Long eventId,@PathVariable Long userId,
+                                                        @RequestParam Status status);
 
     @GetMapping("/prepare-confirmed-requests")
     default Map<Long, List<ParticipationRequestDto>> prepareConfirmedRequestsFallback(List<Long> eventIds,

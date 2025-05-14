@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.ewm.UserActionClient;
 import ru.practicum.ewm.client.EventClient;
 import ru.practicum.ewm.client.UserClient;
 import ru.practicum.ewm.dto.event.EventFullDto;
@@ -14,10 +15,12 @@ import ru.practicum.ewm.exception.ConflictDataException;
 import ru.practicum.ewm.exception.DuplicateException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.ValidationException;
+import ru.practicum.ewm.grpc.stats.event.ActionTypeProto;
 import ru.practicum.ewm.mapper.ParticipationRequestMapper;
 import ru.practicum.ewm.model.ParticipationRequest;
 import ru.practicum.ewm.repository.ParticipationRequestRepository;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +34,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     private final ParticipationRequestRepository requestRepository;
     private final UserClient userClient;
     private final EventClient eventClient;
+    private final UserActionClient userActionClient;
 
     @Transactional
     @Override
@@ -70,7 +74,12 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
                 .eventId(event.getId())
                 .status(status)
                 .build();
-        return ParticipationRequestMapper.toParticipationRequestDto(requestRepository.save(participationRequest));
+        ParticipationRequestDto requestDto = ParticipationRequestMapper
+                .toParticipationRequestDto(requestRepository.save(participationRequest));
+
+        userActionClient.collectUserAction(eventId, userId, ActionTypeProto.ACTION_REGISTER, Instant.now());
+
+        return requestDto;
     }
 
     @Transactional
@@ -138,6 +147,11 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     @Override
     public void deleteByRequesterId(Long requesterId) {
         requestRepository.deleteByRequesterId(requesterId);
+    }
+
+    @Override
+    public boolean checkExistsByEventIdAndRequesterIdAndStatus(Long eventId, Long userId, Status status) {
+        return requestRepository.existsByEventIdAndRequesterIdAndStatus(eventId, userId, status);
     }
 
     private void checkExistsUserById(Long userId) {

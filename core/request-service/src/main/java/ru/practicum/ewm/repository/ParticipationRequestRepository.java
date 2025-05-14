@@ -2,6 +2,7 @@ package ru.practicum.ewm.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import ru.practicum.ewm.dto.partrequest.enums.Status;
 import ru.practicum.ewm.model.ParticipationRequest;
 
 import java.util.List;
@@ -21,4 +22,6 @@ public interface ParticipationRequestRepository extends JpaRepository<Participat
     List<ParticipationRequest> findConfirmedRequests(List<Long> ids);
 
     void deleteByRequesterId(Long requesterId);
+
+    boolean existsByEventIdAndRequesterIdAndStatus(Long eventId, Long userId, Status status);
 }

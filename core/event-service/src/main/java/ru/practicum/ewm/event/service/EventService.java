@@ -17,7 +17,7 @@ public interface EventService {
 
     List<EventShortDto> getPublicEventsByFilter(HttpServletRequest httpServletRequest, EventPublicFilter inputFilter);
 
-    EventFullDto getPublicEventById(HttpServletRequest httpServletRequest, Long id);
+    EventFullDto getPublicEventById(long userId, Long id);
 
     List<EventFullDto> getEventsForAdmin(EventAdminFilter admin);
 
@@ -35,4 +35,8 @@ public interface EventService {
     boolean checkExistsById(Long eventId);
 
     void deleteEventsByUser(Long userId);
+
+    List<EventShortDto> getEventsRecommendations(Long userId, int maxResults);
+
+    void addLikeToEvent(Long eventId, Long userId);
 }

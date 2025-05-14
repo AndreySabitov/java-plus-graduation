@@ -32,15 +32,10 @@ InternalEventController, InternalRequestController и InternalCommentController
 #### CommentService
 1. Удалить все комментарии пользователя: DELETE /internal/comment
 
-#### StatsServer
-1. Сохранить статистику: POST /hit
-2. Получение статистики: GET /stats
-
 #### UserService
 1. Получить список пользователей по их ids: GET /admin/users
 2. Найти пользователя по id: GET /admin/users/{userId}
 3. Проверить, что пользователь существует: GET /admin/users/{userId}/exists
 
 ### Внешний API приложения: 
-1. ![ewm-main-service-spec.json](ewm-main-service-spec.json)
-2. ![ewm-stats-service-spec.json](ewm-stats-service-spec.json)
+1. [main-service](ewm-main-service-spec.json)

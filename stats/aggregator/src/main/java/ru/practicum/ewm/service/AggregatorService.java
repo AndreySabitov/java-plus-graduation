@@ -56,7 +56,7 @@ public class AggregatorService {
         } finally {
             try {
                 producer.flush();
-                consumer.commitSync();
+                consumer.commitAsync();
             } finally {
                 log.info("Закрываем консьюмер");
                 consumer.close();

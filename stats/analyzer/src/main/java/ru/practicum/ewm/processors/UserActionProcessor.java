@@ -49,7 +49,7 @@ public class UserActionProcessor implements Runnable {
             log.error("Ошибка чтения данных из топика {}", topic);
         } finally {
             try {
-                consumer.commitSync();
+                consumer.commitAsync();
             } finally {
                 consumer.close();
             }

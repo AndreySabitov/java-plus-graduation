@@ -47,7 +47,7 @@ public class EventSimilarityProcessor {
             log.error("Ошибка чтения данных из топика {}", topic);
         } finally {
             try {
-                consumer.commitSync();
+                consumer.commitAsync();
             } finally {
                 consumer.close();
             }

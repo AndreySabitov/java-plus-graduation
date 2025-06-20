@@ -1,19 +1,54 @@
-### Архитектура приложения:
+# Explore With Me (Upgraded version) 
+## Микросервисная платформа для организации событий с рекомендательной системой
 
-Приложение разбито на 4 микросервиса:
-1. event-service обрабатывает запросы связанные с событиями, подборками событий и категориями
-2. request-service обрабатывает запросы пользователей связанные с заявками на участие в событиях
-3. user-service обрабатывает запросы связанные с пользователями
-4. comment-service работает с комментариями пользователей
+### Архитектурные особенности:
+* Основные сервисы:
+  * Event-service - управление событиями, категориями и подборками
+  * Request-service - обработка заявок на участие в событиях
+  * User-service - обработка операций с пользовательскими профилями
+  * Comment-service - система комментирования событий
+* Вспомогательные компоненты:
+  * Interaction-API — общий модуль с DTO, исключениями и Feign-клиентами для межсервисного взаимодействия
+  * Internal API — выделенные контроллеры для внутренней коммуникации:
+    * InternalEventController
+    * InternalRequestController
+    * InternalCommentController
+* Ключевые решения:
+  * Cloud-Native подход:
+    * Централизованная конфигурация через Config Server
+    * Сервис обнаружения Eureka Server для динамической маршрутизации
+    * Единая точка входа через Spring Cloud Gateway
+    * Балансировка нагрузки с Spring Cloud Load Balancer
+  * Отказоустойчивость:
+    * Реализация паттерна Circuit Breaker (Resilience4j)
+* Сервис статистики был переработан в рекомендательный сервис:
+  * Алгоритм item-based collaborative filtering
+  * Расчет косинусной меры сходства между событиями
+  * Прогнозирование пользовательских оценок
+  * Персонализированные рекомендации топ-N событий
 
-Вспомогательный модуль interaction-api содержит в себе общие для всех модулей DTO, Exception и Feign-клиенты, с помощью
-которых происходит общение между микросервисами
+### Преимущества обновления:
+* Микросервисная архитектура с четким разделением ответственности
+* Адаптация для работы в облачных средах (внедрены компоненты Spring Cloud: Config, Eureka, Gateway)
+* Интеграция механизмов обработки больших потоков данных (Apache Kafka, Avro, Protobuf)
 
-Для обращения к event-service, request-service, comment-service были выделены отдельные внутренние контроллеры: 
-InternalEventController, InternalRequestController и InternalCommentController
-
-Все микросервисы при запуске регистрируются в eureka-server. Все конфигурации загружаются из config-server. Все запросы
-проходят через gateway-server, который находит нужный сервис через eureka и перенаправляет запрос по нужному адресу
+### Технологии:
+* Java 21
+* Spring Boot 3.3.4
+* Maven
+* PostgreSQL
+* Spring Data JPA
+* Hibernate ORM
+* Apache Kafka
+* Apache Avro
+* Protocol Buffers
+* gRPC
+* Spring Cloud Config
+* Spring Cloud Eureka
+* Spring Cloud Feign
+* Spring Cloud Gateway
+* Spring Cloud Load Balancer
+* Resilience4j
 
 ### Описание внутреннего API приложения:
 #### EventService:
